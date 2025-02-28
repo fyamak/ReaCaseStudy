@@ -1,0 +1,8 @@
+dotnet ef migrations add Initial --startup-project .\src\Web --project .\src\Infrastructure -o Data\Postgres\Migrations
+
+dotnet ef database update --startup-project .\src\Web --project .\src\Infrastructure
+
+
+
+dotnet ef migrations add Initial --startup-project .\src\Web --project .\src\Infrastructure -o Data\Postgres\EntityFramework\Migrations
+dotnet ef migrations remove --startup-project .\src\Web --project .\src\Infrastructure
