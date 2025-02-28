@@ -5,7 +5,6 @@ using Serilog.Events;
 using Shared.Extensions;
 using FluentValidation;
 using Infrastructure.Data.Postgres;
-using Business.Services.Security.Auth.Jwt.Models;
 
 namespace Business.RequestHandlers.Product
 {

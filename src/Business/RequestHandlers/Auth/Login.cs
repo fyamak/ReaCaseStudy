@@ -19,9 +19,7 @@ public abstract class Login
 {
     public class LoginRequest : IRequest<DataResult<Token>>, IRequestToValidate
     {
-        [DefaultValue("fy@gmail.com")]
         public string Email    { get; set; } = default!;
-        [DefaultValue("12345678")]
         public string Password { get; set; } = default!;
     }
 

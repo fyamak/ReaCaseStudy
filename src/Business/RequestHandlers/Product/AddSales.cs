@@ -20,7 +20,6 @@ namespace Business.RequestHandlers.Product
         {
             public int ProductId { get; internal set; }
             public int Quantity { get; set; }
-            [DefaultValue("2024-02-27T11:00:00Z")]
             public DateTime Date { get; set; }
         }
         public class AddSalesResponse

@@ -1,15 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MediatR;
+﻿using MediatR;
 using Serilog.Events;
 using Shared.Models.Results;
 using Serilog;
 using Shared.Extensions;
-using Infrastructure.Data.Postgres.Entities;
 using Infrastructure.Data.Postgres;
 
 

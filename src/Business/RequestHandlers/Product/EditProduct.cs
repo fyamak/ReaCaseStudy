@@ -1,19 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using FluentValidation;
+﻿using FluentValidation;
 using Infrastructure.Data.Postgres;
 using MediatR;
 using Shared.Models.Results;
 using Serilog;
 using Serilog.Events;
-using Business.Services.Security.Auth.Jwt.Models;
-using Business.Services.Security.Auth.Jwt;
-using Infrastructure.Data.Postgres.Entities;
 using Shared.Extensions;
-using Infrastructure.Data.Postgres.Repositories.Interface;
 
 
 namespace Business.RequestHandlers.Product

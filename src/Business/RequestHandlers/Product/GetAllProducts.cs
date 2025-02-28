@@ -4,7 +4,6 @@ using Shared.Models.Results;
 using Serilog;
 using Shared.Extensions;
 using Infrastructure.Data.Postgres;
-using Infrastructure.Data.Postgres.Repositories.Interface;
 
 
 namespace Business.RequestHandlers.Product

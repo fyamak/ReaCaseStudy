@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Infrastructure.Data.Postgres;
+﻿using Infrastructure.Data.Postgres;
 using MediatR;
 using Shared.Models.Results;
 using Serilog;
 using Serilog.Events;
 using Shared.Extensions;
 using Infrastructure.Data.Postgres.Entities;
-using System.ComponentModel;
 
 
 namespace Business.RequestHandlers.Product
@@ -21,7 +15,6 @@ namespace Business.RequestHandlers.Product
         {
             public int ProductId { get; internal set; }
             public int Quantity { get; set; }
-            [DefaultValue("2024-02-27T10:00:00Z")]
             public DateTime Date { get; set; }
         }
 
