@@ -14,7 +14,7 @@ namespace Business.RequestHandlers.Product
     {
         public class AddSupplyRequest : IRequest<DataResult<AddSupplyResponse>>
         {
-            public int ProductId { get; internal set; }
+            public int ProductId;
             public int Quantity { get; set; }
             public DateTime Date { get; set; }
         }

@@ -20,7 +20,7 @@ namespace Business.RequestHandlers.Product
     {
         public class AddSalesRequest : IRequest<DataResult<List<AddSalesResponse>>>
         {
-            public int ProductId { get; internal set; }
+            public int ProductId;
             public int Quantity { get; set; }
             public DateTime Date { get; set; }
         }
@@ -85,10 +85,11 @@ namespace Business.RequestHandlers.Product
                         return DataResult<List<AddSalesResponse>>.Invalid(SpecifiedProductCannotFind);
                     }
 
-                    var productSupplies = await _unitOfWork.ProductSupplies.GetAllAsync();
-                    var orderedProductSupplies = productSupplies
-                        .Where(ps => ps.ProductId == request.ProductId && ps.RemainingQuantity > 0 && ps.Date < request.Date)
-                        .OrderBy(ps => ps.Date).ToList();
+                    // .ContinueWith() can be used
+                    var productSupplies = await _unitOfWork.ProductSupplies
+                        .FindAsync(ps => ps.ProductId == request.ProductId && ps.RemainingQuantity > 0 && ps.Date < request.Date);
+                    var orderedProductSupplies = productSupplies.OrderBy(ps => ps.Date).ToList();
+
 
                     int totalAvailableStock = orderedProductSupplies.Sum(ps => ps.RemainingQuantity);
                     if (totalAvailableStock < request.Quantity)

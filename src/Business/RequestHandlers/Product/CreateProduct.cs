@@ -5,7 +5,7 @@ using Serilog.Events;
 using Shared.Extensions;
 using FluentValidation;
 using Infrastructure.Data.Postgres;
-using static Business.RequestHandlers.Product.AddSupply;
+using Infrastructure.Data.Postgres.Entities;
 
 namespace Business.RequestHandlers.Product
 {

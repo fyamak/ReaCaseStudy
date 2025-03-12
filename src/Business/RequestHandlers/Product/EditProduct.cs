@@ -14,7 +14,7 @@ namespace Business.RequestHandlers.Product
     {
         public class EditProductRequest : IRequest<DataResult<EditProductResponse>>
         {
-            public int Id { get; internal set; }
+            public int Id;
             public string Name { get; set; }
         }
 
@@ -42,7 +42,6 @@ namespace Business.RequestHandlers.Product
             private const string ProductCouldNotUpdatedOnDatabase = "Product could not update on database.";
             private readonly IUnitOfWork _unitOfWork;
             private readonly ILogger _logger;
-            //private readonly IProductRepository _productRepository;
 
             public EditProductRequestHandler(IUnitOfWork unitOfWork, ILogger logger)
             {
@@ -76,7 +75,7 @@ namespace Business.RequestHandlers.Product
 
                     product.Name = request.Name;
                     product.UpdatedAt = DateTime.UtcNow;
-                    // is result check? is PostgresContext throw error if it is return 0
+                    
                     int result = await _unitOfWork.Products.Update(product);
                     if (result > 0)
                     {

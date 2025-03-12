@@ -64,20 +64,21 @@ namespace Business.RequestHandlers.Product
 
                 try
                 {
-                    var productSupplies = await _unitOfWork.ProductSupplies.GetAllAsync();
-                    var productSales = await _unitOfWork.ProductSales.GetAllAsync();
+                    var productSupplies = await _unitOfWork.ProductSupplies
+                        .FindAsync(p => p.Date >= request.StartDate
+                            && p.Date <= request.EndDate
+                            && (!request.ProductId.HasValue || p.ProductId == request.ProductId));
+                    var orderedProductSupplies = productSupplies.OrderBy(ps => ps.Date).ToList();
 
-                    var filteredProductSupplies = productSupplies
-                        .Where(p => p.Date >= request.StartDate && p.Date <= request.EndDate &&
-                                    (!request.ProductId.HasValue || p.ProductId == request.ProductId))
-                        .ToList();
+                    var productSales = await _unitOfWork.ProductSales
+                        .FindAsync(s => s.Date >= request.StartDate
+                            && s.Date <= request.EndDate
+                            && (!request.ProductId.HasValue || s.ProductId == request.ProductId));
+                    var orderedProductSales = productSales.OrderBy(ps => ps.Date).ToList();
 
-                    var filteredProductSales = productSales
-                        .Where(s => s.Date >= request.StartDate && s.Date <= request.EndDate &&
-                                    (!request.ProductId.HasValue || s.ProductId == request.ProductId))
-                        .ToList();
+              
 
-                    var transactions = filteredProductSupplies.Select(p => new TransactionResponse
+                    var transactions = orderedProductSupplies.Select(p => new TransactionResponse
                     {
                         Id = p.Id,
                         ProductId = p.ProductId,
@@ -87,7 +88,7 @@ namespace Business.RequestHandlers.Product
                         RemainingQuantity = p.RemainingQuantity
                     }).ToList();
                     
-                    transactions.AddRange(filteredProductSales.Select(s => new TransactionResponse
+                    transactions.AddRange(orderedProductSales.Select(s => new TransactionResponse
                     {
                         Id = s.Id,
                         ProductId = s.ProductId,

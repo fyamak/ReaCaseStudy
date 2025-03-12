@@ -27,28 +27,27 @@ public class ProductController(IMediator mediator) : BaseController(mediator)
     }
 
 
-    // use update instead of edit
     [HttpPut("/Products/{id}")]
     [Authorize]
-    public Task<DataResult<EditProduct.EditProductResponse>> Products (int id, EditProduct.EditProductRequest request)
+    public Task<DataResult<EditProduct.EditProductResponse>> Products (int id, [FromBody] EditProduct.EditProductRequest request)
     {
-        request.GetType().GetProperty(nameof(request.Id))?.SetValue(request, id);
+        request.Id = id;
         return Mediator.Send(request);
     }
 
     [HttpPost("/Products/{productId}/Supplies")]
     [Authorize]
-    public Task<DataResult<AddSupply.AddSupplyResponse>> AddSupply(int productId,AddSupply.AddSupplyRequest request)
+    public Task<DataResult<AddSupply.AddSupplyResponse>> AddSupply(int productId, [FromBody] AddSupply.AddSupplyRequest request)
     {
-        request.GetType().GetProperty(nameof(request.ProductId))?.SetValue(request, productId);
+        request.ProductId = productId;
         return Mediator.Send(request);
     }
 
     [HttpPost("/Products/{productId}/Sales")]
     [Authorize]
-    public Task<DataResult<List<AddSales.AddSalesResponse>>> AddSales(int productId, AddSales.AddSalesRequest request)
+    public Task<DataResult<List<AddSales.AddSalesResponse>>> AddSales(int productId, [FromBody] AddSales.AddSalesRequest request)
     {
-        request.GetType().GetProperty(nameof(request.ProductId))?.SetValue(request, productId);
+        request.ProductId = productId;
         return Mediator.Send(request);
     }
 
