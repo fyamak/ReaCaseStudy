@@ -16,16 +16,16 @@ namespace Business.Test.RequestHandlers;
 
 public abstract class BaseHandlerTest
 {
-    protected readonly ContainerBuilder ContainerBuilder;
-    protected          IMediator        Mediator;
-    protected          PostgresContext  PostgresContext;
-    protected          IContainer       Container;
+    protected readonly ContainerBuilder ContainerBuilder; //  Autofac ile bağımlılıkları kaydetmek için kullanılır.
+    protected          IMediator        Mediator; // istekleri göndermek için kullanılıyor
+    protected          PostgresContext  PostgresContext; // InMemory DB kullanarak testler için veritabanı işlemlerini yürütmek için kullanılır.
+    protected          IContainer       Container; // Autofac bağımlılıklarını içeren ana kapsayıcıdır.
 
     protected BaseHandlerTest()
     {
-        var services = new ServiceCollection();
+        var services = new ServiceCollection(); // .NET'in IServiceCollection yapısını kullanarak bağımlılıkları eklemek için oluşturulur
 
-        var builder = new ContainerBuilder();
+        var builder = new ContainerBuilder(); // Autofac bağımlılıklarını kaydetmek için oluşturulur.
 
         // Transient when testing to avoid collisions on tracking
         services.AddDbContext<PostgresContext>(options =>
@@ -39,11 +39,12 @@ public abstract class BaseHandlerTest
 
         services.AddMediatR(cfg =>
         {
+            // MediatR kullanımı, testlerde CQRS deseninin uygulanmasını sağlar.
             cfg.RegisterServicesFromAssembly(typeof(BusinessModule).Assembly);
             cfg.RegisterServicesFromAssembly(typeof(InfrastructureModule).Assembly);
 
             // Behaviours
-            cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
+            cfg.AddOpenBehavior(typeof(ValidationBehavior<,>)); // MediatR yapılandırılıyor ve ValidationBehavior middleware olarak ekleniyor.
         });
 
         var inMemoryConfig = new Dictionary<string, string>
@@ -68,8 +69,8 @@ public abstract class BaseHandlerTest
         services.CreateOptions(configuration);
 
         builder.Populate(services);
-        builder.RegisterModule<BusinessModule>();
-        builder.RegisterModule<InfrastructureModule>();
+        builder.RegisterModule<BusinessModule>(); // BusinessModule bağımlılıkları sisteme kaydediliyor.
+        builder.RegisterModule<InfrastructureModule>(); // InfrastructureModule bağımlılıkları sisteme kaydediliyor.
 
         ContainerBuilder = builder;
     }
