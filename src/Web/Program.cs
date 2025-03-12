@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Business;
@@ -15,6 +15,7 @@ using Serilog;
 using Web;
 using Web.Extensions;
 using Web.Middlewares;
+using static Business.RequestHandlers.Product.AddSales;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,11 +23,12 @@ var configuration = builder.Configuration;
 
 var environment = configuration["App:EnvironmentAlias"] ?? "DEV";
 
+
 builder.Services.AddCors(options => options.AddPolicy("CorsPolicy", cBuilder =>
 {
-    cBuilder.AllowAnyHeader()
+    cBuilder.WithOrigins("http://localhost:3000") 
+        .AllowAnyHeader()
         .AllowAnyMethod()
-        .SetIsOriginAllowed(_ => true)
         .AllowCredentials();
 }));
 
@@ -157,6 +159,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+app.UseCors("AllowSpecificOrigin");
+
 
 app.UseCors("CorsPolicy");
 
