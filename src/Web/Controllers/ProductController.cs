@@ -13,55 +13,55 @@ public class ProductController(IMediator mediator) : BaseController(mediator)
 
     [HttpGet("/Products")]
     [Authorize]
-    public Task<DataResult<List<GetAllProducts.GetAllProductsResponse>>> Products ()
+    public async Task<DataResult<List<GetAllProducts.GetAllProductsResponse>>> Products ()
     {
-        return Mediator.Send(new GetAllProducts.GetAllProductsRequest());
+        return await Mediator.Send(new GetAllProducts.GetAllProductsRequest());
     }
 
 
     [HttpPost("/Products")]
     [Authorize]
-    public Task<DataResult<CreateProduct.CreateProductResponse>> Products(CreateProduct.CreateProductRequest request)
+    public async Task<DataResult<CreateProduct.CreateProductResponse>> Products(CreateProduct.CreateProductRequest request)
     {
-        return Mediator.Send(request);
+        return await Mediator.Send(request);
     }
 
 
     [HttpPut("/Products/{id}")]
     [Authorize]
-    public Task<DataResult<EditProduct.EditProductResponse>> Products (int id, [FromBody] EditProduct.EditProductRequest request)
+    public async Task<DataResult<EditProduct.EditProductResponse>> Products (int id, [FromBody] EditProduct.EditProductRequest request)
     {
         request.Id = id;
-        return Mediator.Send(request);
+        return await Mediator.Send(request);
     }
 
     [HttpPost("/Products/{productId}/Supplies")]
     [Authorize]
-    public Task<DataResult<AddSupply.AddSupplyResponse>> AddSupply(int productId, [FromBody] AddSupply.AddSupplyRequest request)
+    public async Task<DataResult<AddSupply.AddSupplyResponse>> AddSupply(int productId, [FromBody] AddSupply.AddSupplyRequest request)
     {
         request.ProductId = productId;
-        return Mediator.Send(request);
+        return await Mediator.Send(request);
     }
 
     [HttpPost("/Products/{productId}/Sales")]
     [Authorize]
-    public Task<DataResult<List<AddSales.AddSalesResponse>>> AddSales(int productId, [FromBody] AddSales.AddSalesRequest request)
+    public async Task<DataResult<List<AddSales.AddSalesResponse>>> AddSales(int productId, [FromBody] AddSales.AddSalesRequest request)
     {
         request.ProductId = productId;
-        return Mediator.Send(request);
+        return await Mediator.Send(request);
     }
 
 
 
     [HttpGet("/Transactions/{startDate}/{endDate}")]
     [Authorize]
-    public Task<DataResult<List<Transaction.TransactionResponse>>> Transactions(
+    public async Task<DataResult<List<Transaction.TransactionResponse>>> Transactions(
         DateTime startDate,
         DateTime endDate,
         [FromQuery] int? productId = null
         )
     {
-        return Mediator.Send(new Transaction.TransactionRequest
+        return await Mediator.Send(new Transaction.TransactionRequest
         {
             StartDate = startDate,
             EndDate = endDate,
