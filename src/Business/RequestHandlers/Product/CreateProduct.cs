@@ -5,6 +5,7 @@ using Serilog.Events;
 using Shared.Extensions;
 using FluentValidation;
 using Infrastructure.Data.Postgres;
+using static Business.RequestHandlers.Product.AddSupply;
 
 namespace Business.RequestHandlers.Product
 {
@@ -46,6 +47,14 @@ namespace Business.RequestHandlers.Product
 
             public async Task<DataResult<CreateProductResponse>> Handle(CreateProductRequest request, CancellationToken cancellationToken)
             {
+                var validator = new CreateProductRequestValidator();
+                var validationResult = validator.Validate(request);
+
+                if (!validationResult.IsValid)
+                {
+                    return DataResult<CreateProductResponse>.Invalid(validationResult.Errors.First().ErrorMessage);
+                }
+
                 try
                 {
                     if (await _unitOfWork.Products.CountAsync(p => p.Name== request.Name) > 0)

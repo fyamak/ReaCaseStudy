@@ -5,6 +5,7 @@ using Serilog;
 using Serilog.Events;
 using Shared.Extensions;
 using Infrastructure.Data.Postgres.Entities;
+using FluentValidation;
 
 
 namespace Business.RequestHandlers.Product
@@ -27,6 +28,28 @@ namespace Business.RequestHandlers.Product
             public int RemainingQuantity { get; set; }
         }
 
+        public class AddSupplyRequestValidator : AbstractValidator<AddSupplyRequest>
+        {
+            public AddSupplyRequestValidator()
+            {
+                RuleFor(x => x.Quantity)
+                 .GreaterThanOrEqualTo(1)
+                 .WithMessage("Quantity must be greater than 0.");
+
+                RuleFor(x => x.ProductId)
+                    .NotEmpty()
+                    .WithMessage("Product id cannot be empty.");
+
+                RuleFor(x => x.Quantity)
+                    .NotEmpty()
+                    .WithMessage("Quantity cannot be empty.");
+
+                RuleFor(x => x.Date)
+                    .NotEmpty()
+                    .WithMessage("Date cannot be empty.");
+            }
+        }
+
         public class AddSupplyRequestHandler : IRequestHandler<AddSupplyRequest, DataResult<AddSupplyResponse>>
         {
             private const string SpecifiedProductCannotFind = "Specified product is not found.";
@@ -41,6 +64,14 @@ namespace Business.RequestHandlers.Product
 
             public async Task<DataResult<AddSupplyResponse>> Handle(AddSupplyRequest request, CancellationToken cancellationToken)
             {
+                var validator = new AddSupplyRequestValidator();
+                var validationResult = validator.Validate(request);
+
+                if (!validationResult.IsValid)
+                {
+                    return DataResult<AddSupplyResponse>.Invalid(validationResult.Errors.First().ErrorMessage);
+                }
+
                 try
                 {
                     if (await _unitOfWork.Products.CountAsync(p => p.Id == request.ProductId) == 0)

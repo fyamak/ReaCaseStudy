@@ -5,6 +5,7 @@ using Shared.Models.Results;
 using Serilog;
 using Serilog.Events;
 using Shared.Extensions;
+using static Business.RequestHandlers.Product.CreateProduct;
 
 
 namespace Business.RequestHandlers.Product
@@ -29,8 +30,8 @@ namespace Business.RequestHandlers.Product
         {
             public EditProductRequestValidator()
             {
-                RuleFor(x => x.Id).NotEmpty();
-                RuleFor(x => x.Name).NotEmpty();
+                RuleFor(x => x.Id).NotEmpty().WithMessage("Id cannot be empty."); 
+                RuleFor(x => x.Name).NotEmpty().WithMessage("Name cannot be empty.");
             }
         }
 
@@ -51,9 +52,16 @@ namespace Business.RequestHandlers.Product
 
             public async Task<DataResult<EditProductResponse>> Handle(EditProductRequest request, CancellationToken cancellationToken)
             {
+                var validator = new EditProductRequestValidator();
+                var validationResult = validator.Validate(request);
+
+                if (!validationResult.IsValid)
+                {
+                    return DataResult<EditProductResponse>.Invalid(validationResult.Errors.First().ErrorMessage);
+                }
+
                 try
                 {
-                    //what should i do if it is deleted?
                    var product = await _unitOfWork.Products.FirstOrDefaultAsync(p => p.Id == request.Id && !p.IsDeleted);
 
                     if (product == null)

@@ -4,6 +4,8 @@ using Shared.Models.Results;
 using Serilog;
 using Shared.Extensions;
 using Infrastructure.Data.Postgres;
+using FluentValidation;
+using static Business.RequestHandlers.Product.EditProduct;
 
 
 namespace Business.RequestHandlers.Product
@@ -27,6 +29,18 @@ namespace Business.RequestHandlers.Product
             public int? RemainingQuantity { get; set; }
         }
 
+        public class TransactionRequestValidator: AbstractValidator<TransactionRequest>
+        {
+            public TransactionRequestValidator()
+            {
+                RuleFor(x => x.StartDate).NotEmpty();
+                RuleFor(x => x.EndDate).NotEmpty();
+                RuleFor(x => x)
+                    .Must(x => x.EndDate > x.StartDate)
+                    .WithMessage("End date cannot be earlier than start date.");
+            }
+        }
+
         public class TransactionRequestHandler : IRequestHandler<TransactionRequest, DataResult<List<TransactionResponse>>>
         {
             private readonly ILogger _logger;
@@ -40,6 +54,14 @@ namespace Business.RequestHandlers.Product
 
             public async Task<DataResult<List<TransactionResponse>>> Handle(TransactionRequest request, CancellationToken cancellationToken)
             {
+                var validator = new TransactionRequestValidator();
+                var validationResult = validator.Validate(request);
+
+                if (!validationResult.IsValid)
+                {
+                    return DataResult<List<TransactionResponse>>.Invalid(validationResult.Errors.First().ErrorMessage);
+                }
+
                 try
                 {
                     var productSupplies = await _unitOfWork.ProductSupplies.GetAllAsync();

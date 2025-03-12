@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FluentValidation;
 using Infrastructure.Data.Postgres;
 using Infrastructure.Data.Postgres.Entities;
 using MediatR;
@@ -11,6 +12,7 @@ using Serilog;
 using Serilog.Events;
 using Shared.Extensions;
 using Shared.Models.Results;
+using static Business.RequestHandlers.Product.AddSupply;
 
 namespace Business.RequestHandlers.Product
 {
@@ -31,6 +33,28 @@ namespace Business.RequestHandlers.Product
             public int RemainingQuantity { get; set; }
         }
 
+        public class AddSalesRequestValidator : AbstractValidator<AddSalesRequest>
+        {
+            public AddSalesRequestValidator()
+            {
+                RuleFor(x => x.Quantity)
+                 .GreaterThanOrEqualTo(1)
+                 .WithMessage("Quantity must be greater than 0.");
+
+                RuleFor(x => x.ProductId)
+                    .NotEmpty()
+                    .WithMessage("Product id cannot be empty.");
+
+                RuleFor(x => x.Quantity)
+                    .NotEmpty()
+                    .WithMessage("Quantity cannot be empty.");
+
+                RuleFor(x => x.Date)
+                    .NotEmpty()
+                    .WithMessage("Date cannot be empty.");
+            }
+        }
+
         public class AddSalesRequestHandler : IRequestHandler<AddSalesRequest, DataResult<List<AddSalesResponse>>>
         {
             private const string SpecifiedProductCannotFind = "Specified product is not found.";
@@ -46,6 +70,14 @@ namespace Business.RequestHandlers.Product
 
             public async Task<DataResult<List<AddSalesResponse>>> Handle(AddSalesRequest request, CancellationToken cancellationToken)
             {
+                var validator = new AddSalesRequestValidator();
+                var validationResult = validator.Validate(request);
+
+                if (!validationResult.IsValid)
+                {
+                    return DataResult<List<AddSalesResponse>>.Invalid(validationResult.Errors.First().ErrorMessage);
+                }
+
                 try
                 {
                     if (await _unitOfWork.Products.CountAsync(p => p.Id == request.ProductId) == 0)
