@@ -1,0 +1,33 @@
+services:
+  web:
+    image: '${DOCKER_REGISTRY-}web'
+    build:
+      context: .
+      dockerfile: C:/Users/furka/source/repos/ReaCaseStudy/src/Web/Dockerfile
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    depends_on:
+      - db
+    networks:
+      - cs_network
+
+  db:
+    image: 'postgres:17'
+    container_name: cs.db
+    restart: always
+    environment:
+      POSTGRES_DB: ReaLayeredV2
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - '5432:5423'
+    volumes:
+      - 'pgdata:/var/lib/postgresql/data'
+    networks:
+      - cs_network
+    
+networks:
+  cs_network: 
+volumes:
+  pgdata: 

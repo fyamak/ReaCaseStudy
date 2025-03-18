@@ -184,6 +184,13 @@ if (environment != "PROD")
     app.UseDeveloperExceptionPage();
 }
 
+// it is necessarry for applying migrations
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<PostgresContext>();
+    dbContext.Database.Migrate();
+}
+
 app.MapControllers();
 
 app.Run();
