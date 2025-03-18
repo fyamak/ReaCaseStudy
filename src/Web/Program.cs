@@ -184,7 +184,7 @@ if (environment != "PROD")
     app.UseDeveloperExceptionPage();
 }
 
-// it is necessarry for applying migrations
+// it is necessarry for applying migrations while using docker
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<PostgresContext>();
