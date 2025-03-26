@@ -55,7 +55,7 @@ public class CreateProductConsumer : BackgroundService
                 return;
             }
 
-            if (await _unitOfWork.Products.CountAsync(p => p.Name == message.Name) > 0)
+            if (await _unitOfWork.Products.CountAsync(msg => msg.Name == message.Name) > 0)
             {
                 // MAIL SECTION
                 _logger.LogWarning("Product with same name already exists");

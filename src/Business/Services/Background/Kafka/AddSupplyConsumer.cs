@@ -69,7 +69,7 @@ public class AddSupplyConsumer : BackgroundService
                 return;
             }
 
-            if (await _unitOfWork.Products.CountAsync(p => p.Id == message.ProductId) == 0)
+            if (await _unitOfWork.Products.CountAsync(msg => msg.Id == message.ProductId) == 0)
             {
                 // MAIL SECTION
                 _logger.LogWarning("Specified product is not found");

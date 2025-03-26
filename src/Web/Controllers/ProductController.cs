@@ -29,7 +29,7 @@ public class ProductController(IMediator mediator) : BaseController(mediator)
 
     [HttpPut("/Products/{id}")]
     //[Authorize]
-    public async Task<DataResult<EditProduct.EditProductResponse>> Products (int id, [FromBody] EditProduct.EditProductRequest request)
+    public async Task<DataResult<string>> Products (int id, [FromBody] EditProduct.EditProductRequest request)
     {
         request.Id = id;
         return await Mediator.Send(request);

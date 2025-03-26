@@ -2,6 +2,7 @@
 using Infrastructure.Data.Postgres.EntityFramework;
 using Infrastructure.Data.Postgres.Repositories.Base;
 using Infrastructure.Data.Postgres.Repositories.Interface;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Data.Postgres.Repositories
 {
@@ -12,6 +13,11 @@ namespace Infrastructure.Data.Postgres.Repositories
         }
         public async Task<int> Update(Product product)
         {
+            var trackedEntity = PostgresContext.Products.Local.FirstOrDefault(p => p.Id == product.Id);
+            if (trackedEntity != null)
+            {
+                PostgresContext.Entry(trackedEntity).State = EntityState.Detached;
+            }
 
             PostgresContext.Products.Update(product);
             return await PostgresContext.SaveChangesAsync();

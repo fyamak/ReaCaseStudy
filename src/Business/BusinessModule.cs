@@ -34,6 +34,7 @@ public class BusinessModule : Module
         builder.RegisterType<CreateProductConsumer>().As<IHostedService>().InstancePerDependency(); ;
         builder.RegisterType<AddSupplyConsumer>().As<IHostedService>().InstancePerDependency(); ;
         builder.RegisterType<AddSaleConsumer>().As<IHostedService>().InstancePerDependency(); ;
+        builder.RegisterType<EditProductConsumer>().As<IHostedService>().InstancePerDependency(); ;
 
         //builder.RegisterType<Consumer>().As<IHostedService>().SingleInstance();
 
