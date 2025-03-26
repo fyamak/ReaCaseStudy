@@ -12,7 +12,7 @@ public class ProductController(IMediator mediator) : BaseController(mediator)
 {
 
     [HttpGet("/Products")]
-    [Authorize]
+    //[Authorize]
     public async Task<DataResult<List<GetAllProducts.GetAllProductsResponse>>> Products ()
     {
         return await Mediator.Send(new GetAllProducts.GetAllProductsRequest());
@@ -20,15 +20,15 @@ public class ProductController(IMediator mediator) : BaseController(mediator)
 
 
     [HttpPost("/Products")]
-    [Authorize]
-    public async Task<DataResult<CreateProduct.CreateProductResponse>> Products(CreateProduct.CreateProductRequest request)
+    //[Authorize]
+    public async Task<DataResult<string>> Products([FromBody] CreateProduct.CreateProductRequest request)
     {
         return await Mediator.Send(request);
     }
 
 
     [HttpPut("/Products/{id}")]
-    [Authorize]
+    //[Authorize]
     public async Task<DataResult<EditProduct.EditProductResponse>> Products (int id, [FromBody] EditProduct.EditProductRequest request)
     {
         request.Id = id;
@@ -36,25 +36,24 @@ public class ProductController(IMediator mediator) : BaseController(mediator)
     }
 
     [HttpPost("/Products/{productId}/Supplies")]
-    [Authorize]
-    public async Task<DataResult<AddSupply.AddSupplyResponse>> AddSupply(int productId, [FromBody] AddSupply.AddSupplyRequest request)
+    //[Authorize]
+    public async Task<DataResult<string>> AddSupply(int productId, [FromBody] AddSupply.AddSupplyRequest request)
     {
         request.ProductId = productId;
         return await Mediator.Send(request);
     }
 
     [HttpPost("/Products/{productId}/Sales")]
-    [Authorize]
-    public async Task<DataResult<List<AddSales.AddSalesResponse>>> AddSales(int productId, [FromBody] AddSales.AddSalesRequest request)
+    //[Authorize]
+    public async Task<DataResult<string>> AddSales(int productId, [FromBody] AddSales.AddSalesRequest request)
     {
         request.ProductId = productId;
         return await Mediator.Send(request);
     }
 
 
-
     [HttpGet("/Transactions/{startDate}/{endDate}")]
-    [Authorize]
+    //[Authorize]
     public async Task<DataResult<List<Transaction.TransactionResponse>>> Transactions(
         DateTime startDate,
         DateTime endDate,
@@ -67,5 +66,11 @@ public class ProductController(IMediator mediator) : BaseController(mediator)
             EndDate = endDate,
             ProductId = productId
         });
+    }
+
+    [HttpGet("/supplies")]
+    public async Task<DataResult<List<GetAllSupplies.GetAllSuppliesResponse>>> Supplies()
+    {
+        return await Mediator.Send(new GetAllSupplies.GetAllSuppliesRequest());
     }
 }

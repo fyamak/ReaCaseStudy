@@ -3,6 +3,7 @@ using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Business;
 using Business.Mediator.Behaviours;
+using Business.Services.Kafka;
 using Business.Services.Security.Auth.Jwt;
 using Business.Services.Security.Auth.Jwt.Interface;
 using Infrastructure;
@@ -89,7 +90,7 @@ builder.Services.AddMediatR(cfg =>
     cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
 });
 
-
+builder.Services.Configure<KafkaSettings>(builder.Configuration.GetSection("Kafka"));
 var postgresConnectionString = builder.Configuration.GetConnectionString("PsqlConnection");
 
 builder.Services.AddDbContext<PostgresContext>(options =>

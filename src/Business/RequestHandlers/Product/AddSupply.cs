@@ -6,104 +6,59 @@ using Serilog.Events;
 using Shared.Extensions;
 using Infrastructure.Data.Postgres.Entities;
 using FluentValidation;
+using Shared.Models.Kafka;
+using Business.Services.Kafka.Interface;
 
 
 namespace Business.RequestHandlers.Product
 {
     public class AddSupply
     {
-        public class AddSupplyRequest : IRequest<DataResult<AddSupplyResponse>>
+        public class AddSupplyRequest : IRequest<DataResult<string>>
         {
             public int ProductId;
             public int Quantity { get; set; }
             public DateTime Date { get; set; }
         }
 
-        public class AddSupplyResponse
+        public class AddSupplyMessage : KafkaMessage
         {
-            public int Id { get; set; }
             public int ProductId { get; set; }
             public int Quantity { get; set; }
             public DateTime Date { get; set; }
-            public int RemainingQuantity { get; set; }
         }
 
-        public class AddSupplyRequestValidator : AbstractValidator<AddSupplyRequest>
+        public class AddSupplyRequestHandler : IRequestHandler<AddSupplyRequest, DataResult<string>>
         {
-            public AddSupplyRequestValidator()
-            {
-                RuleFor(x => x.Quantity)
-                 .GreaterThanOrEqualTo(1)
-                 .WithMessage("Quantity must be greater than 0.");
-
-                RuleFor(x => x.ProductId)
-                    .NotEmpty()
-                    .WithMessage("Product id cannot be empty.");
-
-                RuleFor(x => x.Quantity)
-                    .NotEmpty()
-                    .WithMessage("Quantity cannot be empty.");
-
-                RuleFor(x => x.Date)
-                    .NotEmpty()
-                    .WithMessage("Date cannot be empty.");
-            }
-        }
-
-        public class AddSupplyRequestHandler : IRequestHandler<AddSupplyRequest, DataResult<AddSupplyResponse>>
-        {
-            private const string SpecifiedProductCannotFind = "Specified product is not found.";
-
-            private readonly IUnitOfWork _unitOfWork;
             private readonly ILogger _logger;
-            public AddSupplyRequestHandler(IUnitOfWork unitOfWork, ILogger logger)
+            private readonly IKafkaProducer _kafkaProducer;
+            public AddSupplyRequestHandler(ILogger logger, IKafkaProducer kafkaProducer)
             {
-                _unitOfWork = unitOfWork;
                 _logger = logger;
+                _kafkaProducer = kafkaProducer;
             }
 
-            public async Task<DataResult<AddSupplyResponse>> Handle(AddSupplyRequest request, CancellationToken cancellationToken)
+            public async Task<DataResult<string>> Handle(AddSupplyRequest request, CancellationToken cancellationToken)
             {
-                var validator = new AddSupplyRequestValidator();
-                var validationResult = validator.Validate(request);
-
-                if (!validationResult.IsValid)
-                {
-                    return DataResult<AddSupplyResponse>.Invalid(validationResult.Errors.First().ErrorMessage);
-                }
-
                 try
                 {
-                    if (await _unitOfWork.Products.CountAsync(p => p.Id == request.ProductId) == 0)
+                    var message = new AddSupplyMessage
                     {
-                        return DataResult<AddSupplyResponse>.Invalid(SpecifiedProductCannotFind);
-                    }
-
-                    var productSupply = new ProductSupply
-                    {
+                        Topic = "product-add-supply",
                         ProductId = request.ProductId,
                         Quantity = request.Quantity,
-                        Date = request.Date,
-                        RemainingQuantity = request.Quantity
+                        Date = request.Date
                     };
-                    await _unitOfWork.ProductSupplies.AddAsync(productSupply);
-                    await _unitOfWork.CommitAsync();
 
-                    return DataResult<AddSupplyResponse>.Success(new AddSupplyResponse
-                    {
-                        Id = productSupply.Id,
-                        ProductId = productSupply.ProductId,
-                        Quantity = productSupply.Quantity,
-                        Date = productSupply.Date,
-                        RemainingQuantity = productSupply.RemainingQuantity
-                    });
+                    await _kafkaProducer.ProduceAsync(message.Topic, message);
+                    return DataResult<string>.Success("Adding supply to product request accepted");
 
                 }
                 catch (Exception ex)
                 {
                     _logger.LogExtended(LogEventLevel.Error, $"Error on {GetType().Name}", ex);
 
-                    return DataResult<AddSupplyResponse>.Error(ex.Message);
+                    return DataResult<string>.Error(ex.Message);
                 }
             }
         }
