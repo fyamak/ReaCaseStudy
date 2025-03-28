@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Business.Services.Kafka.Interface;
 
-public interface IKafkaConsumer
+public interface IKafkaConsumerService
 {
     Task ConsumeAsync<T>(string topic, Action<T> messageHandler, CancellationToken cancellationToken) where T : class;
 }

@@ -27,8 +27,8 @@ namespace Business.RequestHandlers.Product
         public class AddSalesRequestHandler : IRequestHandler<AddSalesRequest, DataResult<string>>
         {
             private readonly ILogger _logger;
-            private readonly IKafkaProducer _kafkaProducer;
-            public AddSalesRequestHandler(ILogger logger, IKafkaProducer kafkaProducer)
+            private readonly IKafkaProducerService _kafkaProducer;
+            public AddSalesRequestHandler(ILogger logger, IKafkaProducerService kafkaProducer)
             {
                 _logger = logger;
                 _kafkaProducer = kafkaProducer;

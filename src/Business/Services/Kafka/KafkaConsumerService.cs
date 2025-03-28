@@ -6,11 +6,11 @@ using Microsoft.Extensions.Options;
 
 namespace Business.Services.Kafka;
 
-public class KafkaConsumer : IKafkaConsumer
+public class KafkaConsumerService : IKafkaConsumerService
 {
     private readonly ConsumerConfig _config;
-    private readonly ILogger<KafkaConsumer> _logger;
-    public KafkaConsumer(IOptions<KafkaSettings> settings, ILogger<KafkaConsumer> logger)
+    private readonly ILogger<KafkaConsumerService> _logger;
+    public KafkaConsumerService(IOptions<KafkaSettings> settings, ILogger<KafkaConsumerService> logger)
     {
         _logger = logger;
         _config = new ConsumerConfig

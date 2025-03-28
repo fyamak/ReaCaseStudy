@@ -3,8 +3,6 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Models.Results;
 using Web.Controllers.Base;
-using Web.Filters;
-
 
 namespace Web.Controllers;
 
@@ -69,6 +67,7 @@ public class ProductController(IMediator mediator) : BaseController(mediator)
     }
 
     [HttpGet("/supplies")]
+    //[Authorize]
     public async Task<DataResult<List<GetAllSupplies.GetAllSuppliesResponse>>> Supplies()
     {
         return await Mediator.Send(new GetAllSupplies.GetAllSuppliesRequest());

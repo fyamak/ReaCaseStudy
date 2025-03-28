@@ -11,12 +11,12 @@ using Microsoft.Extensions.Options;
 
 namespace Business.Services.Kafka;
 
-public class KafkaProducer : IKafkaProducer
+public class KafkaProducerService : IKafkaProducerService
 {
     private readonly ProducerConfig _config;
-    private readonly ILogger<KafkaProducer> _logger;
+    private readonly ILogger<KafkaProducerService> _logger;
 
-    public KafkaProducer(IOptions<KafkaSettings> settings, ILogger<KafkaProducer> logger)
+    public KafkaProducerService(IOptions<KafkaSettings> settings, ILogger<KafkaProducerService> logger)
     {
         _logger = logger;
         _config = new ProducerConfig
@@ -34,7 +34,7 @@ public class KafkaProducer : IKafkaProducer
         {
             using var producer = new ProducerBuilder<Null, string>(_config).Build();
             var serializedMessage = JsonSerializer.Serialize(message);
-            
+
             var result = await producer.ProduceAsync(
                 topic, 
                 new Message<Null, string> { Value = serializedMessage }

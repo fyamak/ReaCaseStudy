@@ -5,7 +5,6 @@ using Serilog;
 using Shared.Extensions;
 using Infrastructure.Data.Postgres;
 using FluentValidation;
-using static Business.RequestHandlers.Product.EditProduct;
 
 
 namespace Business.RequestHandlers.Product

@@ -8,6 +8,7 @@ using Infrastructure.Data.Postgres.Entities;
 using FluentValidation;
 using Shared.Models.Kafka;
 using Business.Services.Kafka.Interface;
+using Business.Services.Redis.Interface;
 
 
 namespace Business.RequestHandlers.Product
@@ -31,8 +32,8 @@ namespace Business.RequestHandlers.Product
         public class AddSupplyRequestHandler : IRequestHandler<AddSupplyRequest, DataResult<string>>
         {
             private readonly ILogger _logger;
-            private readonly IKafkaProducer _kafkaProducer;
-            public AddSupplyRequestHandler(ILogger logger, IKafkaProducer kafkaProducer)
+            private readonly IKafkaProducerService _kafkaProducer;
+            public AddSupplyRequestHandler(ILogger logger, IKafkaProducerService kafkaProducer)
             {
                 _logger = logger;
                 _kafkaProducer = kafkaProducer;

@@ -1,11 +1,8 @@
-﻿using FluentValidation;
-using Infrastructure.Data.Postgres;
-using MediatR;
+﻿using MediatR;
 using Shared.Models.Results;
 using Serilog;
 using Serilog.Events;
 using Shared.Extensions;
-using static Business.RequestHandlers.Product.CreateProduct;
 using Shared.Models.Kafka;
 using Business.Services.Kafka.Interface;
 
@@ -31,9 +28,9 @@ namespace Business.RequestHandlers.Product
         public class EditProductRequestHandler : IRequestHandler<EditProductRequest, DataResult<string>>
         {
             private readonly ILogger _logger;
-            private readonly IKafkaProducer _kafkaProducer;
+            private readonly IKafkaProducerService _kafkaProducer;
 
-            public EditProductRequestHandler(ILogger logger, IKafkaProducer kafkaProducer)
+            public EditProductRequestHandler(ILogger logger, IKafkaProducerService kafkaProducer)
             {
                 _logger = logger;
                 _kafkaProducer = kafkaProducer;
