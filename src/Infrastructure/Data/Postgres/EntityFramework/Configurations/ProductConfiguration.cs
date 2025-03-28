@@ -9,6 +9,9 @@ namespace Infrastructure.Data.Postgres.EntityFramework.Configurations
         public void Configure(EntityTypeBuilder<Product> builder)
         {
             builder.HasKey(x => x.Id);
+
+            builder.HasIndex(x => x.Name).IsUnique();
+
             builder.Property(x => x.Name).IsRequired();
             builder.Property(x => x.IsDeleted).HasDefaultValue(false).IsRequired();
         }

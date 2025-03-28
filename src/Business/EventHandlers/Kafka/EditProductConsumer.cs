@@ -1,34 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Business.Services.Kafka.Interface;
+﻿using Business.Services.Kafka.Interface;
 using FluentValidation;
 using Infrastructure.Data.Postgres;
-using MediatR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Org.BouncyCastle.Asn1.Ocsp;
-using Shared.Models.Results;
-using static Business.RequestHandlers.Product.CreateProduct;
+using RedLockNet;
 using static Business.RequestHandlers.Product.EditProduct;
 
-namespace Business.Services.Background.Kafka;
+namespace Business.EventHandlers.Kafka;
 
 public class EditProductConsumer : BackgroundService
 {
     private readonly ILogger<EditProductConsumer> _logger;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IKafkaConsumer _kafkaConsumer;
+    private readonly IKafkaConsumerService _kafkaConsumer;
+    private readonly IDistributedLockFactory _lockFactory;
+
     public EditProductConsumer(
         ILogger<EditProductConsumer> logger,
         IUnitOfWork unitOfWork,
-        IKafkaConsumer kafkaConsumer)
+        IKafkaConsumerService kafkaConsumer,
+        IDistributedLockFactory lockFactory)
     {
         _logger = logger;
         _unitOfWork = unitOfWork;
         _kafkaConsumer = kafkaConsumer;
+        _lockFactory = lockFactory;
     }
 
     public class EditProductRequestValidator : AbstractValidator<EditProductMessage>
@@ -53,6 +49,20 @@ public class EditProductConsumer : BackgroundService
 
     private async Task ProcessProductEdit(EditProductMessage message, CancellationToken cancellationToken)
     {
+        var resource = $"product-edit-lock:{message.Id}";
+        await using var redLock = await _lockFactory.CreateLockAsync(
+            resource,
+            TimeSpan.FromSeconds(10), // lock expiration time
+            TimeSpan.FromSeconds(3), // wait time
+            TimeSpan.FromMilliseconds(500), // retry interval
+            cancellationToken);
+
+        if (!redLock.IsAcquired)
+        {
+            _logger.LogWarning($"Could not acquire lock for product edit: {message.Id}");
+            return;
+        }
+
         try
         {
             var validator = new EditProductRequestValidator();
@@ -84,7 +94,7 @@ public class EditProductConsumer : BackgroundService
             product.Name = message.Name;
             product.UpdatedAt = DateTime.UtcNow;
 
-            int result = await _unitOfWork.Products.Update(product);
+            var result = await _unitOfWork.Products.Update(product);
 
             // MAIL SECTION
             _logger.LogInformation("Product is updated successfully");

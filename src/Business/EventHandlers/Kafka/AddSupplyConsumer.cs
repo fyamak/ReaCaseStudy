@@ -4,24 +4,29 @@ using Infrastructure.Data.Postgres;
 using Infrastructure.Data.Postgres.Entities;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using RedLockNet;
 using static Business.RequestHandlers.Product.AddSupply;
 
-namespace Business.Services.Background.Kafka;
+namespace Business.EventHandlers.Kafka;
 
 public class AddSupplyConsumer : BackgroundService
 {
     private readonly ILogger<AddSupplyConsumer> _logger;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IKafkaConsumer _kafkaConsumer;
+    private readonly IKafkaConsumerService _kafkaConsumer;
+    private readonly IDistributedLockFactory _lockFactory;
+
 
     public AddSupplyConsumer(
         ILogger<AddSupplyConsumer> logger,
-        IUnitOfWork unitOfWork, 
-        IKafkaConsumer kafkaConsumer)
+        IUnitOfWork unitOfWork,
+        IKafkaConsumerService kafkaConsumer,
+        IDistributedLockFactory lockFactory)
     {
         _logger = logger;
         _unitOfWork = unitOfWork;
         _kafkaConsumer = kafkaConsumer;
+        _lockFactory = lockFactory;
     }
     public class AddSupplyRequestValidator : AbstractValidator<AddSupplyMessage>
     {
@@ -57,6 +62,21 @@ public class AddSupplyConsumer : BackgroundService
     }
     private async Task ProcessProductAddSupply(AddSupplyMessage message, CancellationToken cancellationToken)
     {
+        var resource = $"product-supply-lock:{message.ProductId}";
+        await using var redLock = await _lockFactory.CreateLockAsync(
+            resource, 
+            TimeSpan.FromSeconds(30), // lock expiration time
+            TimeSpan.FromSeconds(5), // wait time
+            TimeSpan.FromMilliseconds(500), // retry interval
+            cancellationToken);
+
+        if (!redLock.IsAcquired)
+        {
+            _logger.LogWarning($"Could not acquire lock for product supply: {message.ProductId}");
+            return;
+        }
+
+
         try
         {
             var validator = new AddSupplyRequestValidator();
@@ -94,6 +114,12 @@ public class AddSupplyConsumer : BackgroundService
         {
             // MAIL SECTION
             _logger.LogError(ex, "Error processing product suplly addition", message.ProductId);
+            return;
         }
+        finally
+        {
+            _logger.LogDebug($"Releasing lock for {resource}");
+        }
+        
     }
 }

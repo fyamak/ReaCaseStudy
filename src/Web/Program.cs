@@ -12,11 +12,14 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using RedLockNet.SERedis.Configuration;
+using RedLockNet.SERedis;
+using RedLockNet;
 using Serilog;
+using StackExchange.Redis;
 using Web;
 using Web.Extensions;
 using Web.Middlewares;
-using static Business.RequestHandlers.Product.AddSales;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -91,6 +94,11 @@ builder.Services.AddMediatR(cfg =>
 });
 
 builder.Services.Configure<KafkaSettings>(builder.Configuration.GetSection("Kafka"));
+builder.Services.AddSingleton<IDistributedLockFactory>(provider =>
+    RedLockFactory.Create(
+        new List<RedLockMultiplexer> { ConnectionMultiplexer.Connect("Redis:6379") },
+        new RedLockRetryConfiguration(retryCount: 3, retryDelayMs: 1000)
+    ));
 var postgresConnectionString = builder.Configuration.GetConnectionString("PsqlConnection");
 
 builder.Services.AddDbContext<PostgresContext>(options =>

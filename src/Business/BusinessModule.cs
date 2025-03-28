@@ -9,7 +9,7 @@ using FluentValidation;
 using Business.Services.Kafka;
 using Business.Services.Kafka.Interface;
 using Microsoft.Extensions.Hosting;
-using Business.Services.Background.Kafka;
+using Business.EventHandlers.Kafka;
 
 
 namespace Business;
@@ -28,15 +28,12 @@ public class BusinessModule : Module
             .SingleInstance();
 
         
-        builder.RegisterType<KafkaProducer>().As<IKafkaProducer>().InstancePerDependency(); ;
-        builder.RegisterType<KafkaConsumer>().As<IKafkaConsumer>().InstancePerDependency(); ;
+        builder.RegisterType<KafkaProducerService>().As<IKafkaProducerService>().InstancePerDependency(); ;
+        builder.RegisterType<KafkaConsumerService>().As<IKafkaConsumerService>().InstancePerDependency(); ;
 
-        builder.RegisterType<CreateProductConsumer>().As<IHostedService>().InstancePerDependency(); ;
-        builder.RegisterType<AddSupplyConsumer>().As<IHostedService>().InstancePerDependency(); ;
-        builder.RegisterType<AddSaleConsumer>().As<IHostedService>().InstancePerDependency(); ;
-        builder.RegisterType<EditProductConsumer>().As<IHostedService>().InstancePerDependency(); ;
-
-        //builder.RegisterType<Consumer>().As<IHostedService>().SingleInstance();
-
+        builder.RegisterType<CreateProductConsumer>().As<IHostedService>().SingleInstance(); ;
+        builder.RegisterType<AddSupplyConsumer>().As<IHostedService>().SingleInstance(); ;
+        builder.RegisterType<AddSaleConsumer>().As<IHostedService>().SingleInstance(); ;
+        builder.RegisterType<EditProductConsumer>().As<IHostedService>().SingleInstance(); ;
     }
 }

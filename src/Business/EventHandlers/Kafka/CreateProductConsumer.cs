@@ -5,18 +5,18 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using static Business.RequestHandlers.Product.CreateProduct;
 
-namespace Business.Services.Background.Kafka;
+namespace Business.EventHandlers.Kafka;
 
 public class CreateProductConsumer : BackgroundService
 {
     private readonly ILogger<CreateProductConsumer> _logger;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IKafkaConsumer _kafkaConsumer;
+    private readonly IKafkaConsumerService _kafkaConsumer;
 
     public CreateProductConsumer(
         ILogger<CreateProductConsumer> logger,
         IUnitOfWork unitOfWork,
-        IKafkaConsumer kafkaConsumer)
+        IKafkaConsumerService kafkaConsumer)
     {
         _logger = logger;
         _unitOfWork = unitOfWork;

@@ -13,8 +13,11 @@ services:
     depends_on:
       - db
       - kafka
+      - redis
     networks:
       - cs_network
+    links:
+      - redis
 
   db:
     image: 'postgres:17'
@@ -49,7 +52,7 @@ services:
       - zookeeper
     ports:
       - "9092:9092"
-      - 29092:29092
+      - "29092:29092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -70,6 +73,14 @@ services:
       KAFKA_BROKERCONNECT: "PLAINTEXT://kafka:9092"
     depends_on:
       - kafka
+    networks:
+      - cs_network
+
+  redis:
+    image: redis:7.4
+    container_name: redis
+    ports:
+      - "6379:6379"
     networks:
       - cs_network
 
