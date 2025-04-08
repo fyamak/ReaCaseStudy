@@ -1,6 +1,7 @@
 ﻿using Business.Services.Kafka.Interface;
 using FluentValidation;
 using Infrastructure.Data.Postgres;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using RedLockNet;
@@ -11,20 +12,18 @@ namespace Business.EventHandlers.Kafka;
 public class EditProductConsumer : BackgroundService
 {
     private readonly ILogger<EditProductConsumer> _logger;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly IKafkaConsumerService _kafkaConsumer;
-    private readonly IDistributedLockFactory _lockFactory;
+    private readonly IServiceProvider _serviceProvider;
+
 
     public EditProductConsumer(
         ILogger<EditProductConsumer> logger,
-        IUnitOfWork unitOfWork,
         IKafkaConsumerService kafkaConsumer,
-        IDistributedLockFactory lockFactory)
+        IServiceProvider serviceProvider)
     {
         _logger = logger;
-        _unitOfWork = unitOfWork;
         _kafkaConsumer = kafkaConsumer;
-        _lockFactory = lockFactory;
+        _serviceProvider = serviceProvider;
     }
 
     public class EditProductRequestValidator : AbstractValidator<EditProductMessage>
@@ -38,33 +37,34 @@ public class EditProductConsumer : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        //await Task.Run(async () =>
-        //{
-            await _kafkaConsumer.ConsumeAsync<EditProductMessage>(
-                "product-edit",
-                 async (message) => await ProcessProductEdit(message, stoppingToken),
-                 stoppingToken);
-        //});
+        await _kafkaConsumer.ConsumeAsync<EditProductMessage>(
+            "product-edit",
+            async (message) => await ProcessProductEdit(message, stoppingToken),
+            stoppingToken);
     }
 
     private async Task ProcessProductEdit(EditProductMessage message, CancellationToken cancellationToken)
     {
-        var resource = $"product-edit-lock:{message.Id}";
-        await using var redLock = await _lockFactory.CreateLockAsync(
-            resource,
-            TimeSpan.FromSeconds(10), // lock expiration time
-            TimeSpan.FromSeconds(3), // wait time
-            TimeSpan.FromMilliseconds(500), // retry interval
-            cancellationToken);
-
-        if (!redLock.IsAcquired)
-        {
-            _logger.LogWarning($"Could not acquire lock for product edit: {message.Id}");
-            return;
-        }
+        var scope = _serviceProvider.CreateScope();
 
         try
         {
+            var unitOfWork = scope.ServiceProvider.GetService<IUnitOfWork>();
+            var lockFactory = scope.ServiceProvider.GetService<IDistributedLockFactory>();
+
+            var resource = $"product-edit-lock:{message.Id}";
+            await using var redLock = await lockFactory.CreateLockAsync(
+                resource,
+                TimeSpan.FromSeconds(10), // lock expiration time
+                TimeSpan.FromSeconds(3), // wait time
+                TimeSpan.FromMilliseconds(500), // retry interval
+                cancellationToken);
+
+            if (!redLock.IsAcquired)
+            {
+                _logger.LogWarning($"Could not acquire lock for product edit: {message.Id}");
+                return;
+            }
             var validator = new EditProductRequestValidator();
             var validationResult = validator.Validate(message);
 
@@ -75,7 +75,7 @@ public class EditProductConsumer : BackgroundService
                 return;
             }
 
-            var product = await _unitOfWork.Products.FirstOrDefaultAsync(msg => msg.Id == message.Id && !msg.IsDeleted);
+            var product = await unitOfWork.Products.FirstOrDefaultAsync(msg => msg.Id == message.Id && !msg.IsDeleted);
 
             if (product == null)
             {
@@ -84,7 +84,7 @@ public class EditProductConsumer : BackgroundService
                 return;
             }
 
-            if (await _unitOfWork.Products.CountAsync(msg => msg.Name == message.Name) > 0)
+            if (await unitOfWork.Products.CountAsync(msg => msg.Name == message.Name) > 0)
             {
                 // MAIL SECTION
                 _logger.LogWarning("Product with same name already exists");
@@ -94,7 +94,7 @@ public class EditProductConsumer : BackgroundService
             product.Name = message.Name;
             product.UpdatedAt = DateTime.UtcNow;
 
-            var result = await _unitOfWork.Products.Update(product);
+            var result = await unitOfWork.Products.Update(product);
 
             // MAIL SECTION
             _logger.LogInformation("Product is updated successfully");
@@ -105,6 +105,11 @@ public class EditProductConsumer : BackgroundService
             // MAIL SECTION
             _logger.LogError(ex, "Error processing product creation", message.Id);
             return;
+        }
+        finally
+        {
+            _logger.LogDebug($"Releasing product-edit-lock:{message.Id}");
+            scope.Dispose();
         }
 
     }

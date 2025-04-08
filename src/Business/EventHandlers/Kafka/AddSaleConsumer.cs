@@ -2,6 +2,7 @@
 using FluentValidation;
 using Infrastructure.Data.Postgres;
 using Infrastructure.Data.Postgres.Entities;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using RedLockNet;
@@ -12,20 +13,17 @@ namespace Business.EventHandlers.Kafka;
 public class AddSaleConsumer : BackgroundService
 {
     private readonly ILogger<AddSaleConsumer> _logger;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly IKafkaConsumerService _kafkaConsumer;
-    private readonly IDistributedLockFactory _lockFactory;
+    private readonly IServiceProvider _serviceProvider;
 
     public AddSaleConsumer(
         ILogger<AddSaleConsumer> logger,
-        IUnitOfWork unitOfWork,
         IKafkaConsumerService kafkaConsumer,
-        IDistributedLockFactory lockFactory)
+        IServiceProvider serviceProvider)
     {
         _logger = logger;
-        _unitOfWork = unitOfWork;
         _kafkaConsumer = kafkaConsumer;
-        _lockFactory = lockFactory;
+        _serviceProvider = serviceProvider;
     }
     public class AddSalesRequestValidator : AbstractValidator<AddSaleMessage>
     {
@@ -51,34 +49,37 @@ public class AddSaleConsumer : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        //await Task.Run(async () =>
-        //{
-            await _kafkaConsumer.ConsumeAsync<AddSaleMessage>(
-                "product-add-sale",
-                async (message) => await ProcessProductAddSale(message, stoppingToken),
-                stoppingToken);
-        //});
+        await _kafkaConsumer.ConsumeAsync<AddSaleMessage>(
+            "product-add-sale",
+            async (message) => await ProcessProductAddSale(message, stoppingToken),
+            stoppingToken);
     }
 
     private async Task ProcessProductAddSale(AddSaleMessage message, CancellationToken cancellationToken)
     {
-        var resource = $"product-sale-lock:{message.ProductId}";
-        await using var redLock = await _lockFactory.CreateLockAsync(
-            resource,
-            TimeSpan.FromSeconds(30), // lock expiration time
-            TimeSpan.FromSeconds(5), // wait time
-            TimeSpan.FromMilliseconds(500), // retry interval
-            cancellationToken);
-
-        if (!redLock.IsAcquired)
-        {
-            _logger.LogWarning($"Could not acquire lock for product sale: {message.ProductId}");
-            return;
-        }
-
+        var scope = _serviceProvider.CreateScope();
 
         try
         {
+            var unitOfWork = scope.ServiceProvider.GetService<IUnitOfWork>();
+            var lockFactory = scope.ServiceProvider.GetService<IDistributedLockFactory>();
+
+            
+            
+            var resource = $"product-sale-lock:{message.ProductId}";
+            await using var redLock = await lockFactory.CreateLockAsync(
+                resource,
+                TimeSpan.FromSeconds(30), // lock expiration time
+                TimeSpan.FromSeconds(5), // wait time
+                TimeSpan.FromMilliseconds(500), // retry interval
+                cancellationToken);
+
+            if (!redLock.IsAcquired)
+            {
+                _logger.LogWarning($"Could not acquire lock for product sale: {message.ProductId}");
+                return;
+            }
+
             var validator = new AddSalesRequestValidator();
             var validationResult = validator.Validate(message);
             if (!validationResult.IsValid)
@@ -88,19 +89,14 @@ public class AddSaleConsumer : BackgroundService
                 return;
             }
 
-            if (await _unitOfWork.Products.CountAsync(msg => msg.Id == message.ProductId) == 0)
+            if (await unitOfWork.Products.CountAsync(msg => msg.Id == message.ProductId) == 0)
             {
                 //MAIL SECTION
                 _logger.LogWarning("Specified product is not found");
                 return;
             }
 
-            //// .ContinueWith() can be used
-            //var productSupplies = await _unitOfWork.ProductSupplies
-            //    .FindAsync(ps => ps.ProductId == message.ProductId && ps.RemainingQuantity > 0 && ps.Date < message.Date)
-            //    .ContinueWith(ps => ps.Result.OrderBy(ps => ps.Date).ToList());
-
-            var productSupplies = await _unitOfWork.ProductSupplies
+            var productSupplies = await unitOfWork.ProductSupplies
                 .FindAsync(ps => ps.ProductId == message.ProductId && ps.RemainingQuantity > 0 && ps.Date < message.Date);
             var orderedProductSupplies = productSupplies.OrderBy(ps => ps.Date).ToList();
 
@@ -129,8 +125,8 @@ public class AddSaleConsumer : BackgroundService
                     saleQuantity -= orderedProductSupply.RemainingQuantity;
                     orderedProductSupply.RemainingQuantity = 0;
                 }
-                
-                await _unitOfWork.ProductSupplies.Update(orderedProductSupply);
+
+                await unitOfWork.ProductSupplies.Update(orderedProductSupply);
             }
 
             var productSale = new ProductSale
@@ -140,12 +136,14 @@ public class AddSaleConsumer : BackgroundService
                 Date = message.Date
             };
 
-            await _unitOfWork.ProductSales.AddAsync(productSale);
-            await _unitOfWork.CommitAsync();
+            await unitOfWork.ProductSales.AddAsync(productSale);
+            await unitOfWork.CommitAsync();
 
             //MAIL SECTION
             _logger.LogInformation("Product sale addition is successfull");
             return;
+
+
         }
         catch(Exception ex)
         {
@@ -155,7 +153,8 @@ public class AddSaleConsumer : BackgroundService
         }
         finally
         {
-            _logger.LogDebug($"Releasing lock for {resource}");
+            _logger.LogDebug($"Releasing product-sale-lock:{message.ProductId}");
+            scope.Dispose();
         }
     }
 }

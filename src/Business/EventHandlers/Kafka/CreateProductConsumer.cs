@@ -1,6 +1,7 @@
 ﻿using Business.Services.Kafka.Interface;
 using FluentValidation;
 using Infrastructure.Data.Postgres;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using static Business.RequestHandlers.Product.CreateProduct;
@@ -10,17 +11,18 @@ namespace Business.EventHandlers.Kafka;
 public class CreateProductConsumer : BackgroundService
 {
     private readonly ILogger<CreateProductConsumer> _logger;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly IKafkaConsumerService _kafkaConsumer;
+    private readonly IServiceProvider _serviceProvider;
+
 
     public CreateProductConsumer(
         ILogger<CreateProductConsumer> logger,
-        IUnitOfWork unitOfWork,
-        IKafkaConsumerService kafkaConsumer)
+        IKafkaConsumerService kafkaConsumer,
+        IServiceProvider serviceProvider)
     {
         _logger = logger;
-        _unitOfWork = unitOfWork;
         _kafkaConsumer = kafkaConsumer;
+        _serviceProvider = serviceProvider;
     }
     public class CreateProductRequestValidator : AbstractValidator<CreateProductMessage>
     {
@@ -33,19 +35,19 @@ public class CreateProductConsumer : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        //await Task.Run(async () =>
-        //{
-            await _kafkaConsumer.ConsumeAsync<CreateProductMessage>(
-                "product-create",
-                 async (message) => await ProcessProductCreation(message, stoppingToken),
-                 stoppingToken);
-        //});
+        await _kafkaConsumer.ConsumeAsync<CreateProductMessage>(
+            "product-create",
+            async (message) => await ProcessProductCreation(message, stoppingToken),
+            stoppingToken);
     }
 
     private async Task ProcessProductCreation(CreateProductMessage message, CancellationToken cancellationToken)
     {
+        var scope = _serviceProvider.CreateScope();
         try
         {
+            var unitOfWork = scope.ServiceProvider.GetService<IUnitOfWork>();
+
             var validator = new CreateProductRequestValidator();
             var validationResult = validator.Validate(message);
 
@@ -55,15 +57,15 @@ public class CreateProductConsumer : BackgroundService
                 return;
             }
 
-            if (await _unitOfWork.Products.CountAsync(msg => msg.Name == message.Name) > 0)
+            if (await unitOfWork.Products.CountAsync(msg => msg.Name == message.Name) > 0)
             {
                 // MAIL SECTION
                 _logger.LogWarning("Product with same name already exists");
                 return;
             }
             var product = new Infrastructure.Data.Postgres.Entities.Product { Name = message.Name };
-            await _unitOfWork.Products.AddAsync(product);
-            await _unitOfWork.CommitAsync();
+            await unitOfWork.Products.AddAsync(product);
+            await unitOfWork.CommitAsync();
 
             // MAIL SECTION
             _logger.LogInformation("Product successfully created", product);
@@ -74,6 +76,10 @@ public class CreateProductConsumer : BackgroundService
             // MAIL SECTION
             _logger.LogError(ex, "Error processing product creation", message.Name);
             return;
+        }
+        finally
+        {
+            scope.Dispose();
         }
     }
 }

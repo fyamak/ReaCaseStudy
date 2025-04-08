@@ -8,7 +8,6 @@ using Infrastructure.Data.Postgres.Entities;
 using FluentValidation;
 using Shared.Models.Kafka;
 using Business.Services.Kafka.Interface;
-using Business.Services.Redis.Interface;
 
 
 namespace Business.RequestHandlers.Product

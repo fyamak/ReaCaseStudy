@@ -8,5 +8,5 @@ namespace Business.Services.Kafka.Interface;
 
 public interface IKafkaConsumerService
 {
-    Task ConsumeAsync<T>(string topic, Action<T> messageHandler, CancellationToken cancellationToken) where T : class;
+    Task ConsumeAsync<T>(string topic, Func<T, Task> messageHandler, CancellationToken cancellationToken) where T : class;
 }

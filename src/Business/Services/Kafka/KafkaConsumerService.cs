@@ -23,14 +23,14 @@ public class KafkaConsumerService : IKafkaConsumerService
         };
     }
 
-    public async Task ConsumeAsync<T>(string topic, Action<T> messageHandler, CancellationToken cancellationToken) where T : class
+    public async Task ConsumeAsync<T>(string topic, Func<T, Task> messageHandler, CancellationToken cancellationToken) where T : class
     {
         using var consumer = new ConsumerBuilder<Ignore, string>(_config).Build();
         consumer.Subscribe(topic);
 
         try
         {
-            await Task.Run(() =>
+            await Task.Run(async () =>
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
@@ -42,7 +42,7 @@ public class KafkaConsumerService : IKafkaConsumerService
                             _logger.LogInformation($"Consumed message '{consumeResult.Message.Value}' from topic {consumeResult.Topic}");
 
                             var message = JsonSerializer.Deserialize<T>(consumeResult.Message.Value);
-                            messageHandler(message);
+                            await messageHandler(message);
                         }
                     }
                     catch (ConsumeException ex)

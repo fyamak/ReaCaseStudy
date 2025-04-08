@@ -28,8 +28,8 @@ public class BusinessModule : Module
             .SingleInstance();
 
         
-        builder.RegisterType<KafkaProducerService>().As<IKafkaProducerService>().InstancePerDependency(); ;
-        builder.RegisterType<KafkaConsumerService>().As<IKafkaConsumerService>().InstancePerDependency(); ;
+        builder.RegisterType<KafkaProducerService>().As<IKafkaProducerService>().SingleInstance(); ;
+        builder.RegisterType<KafkaConsumerService>().As<IKafkaConsumerService>().SingleInstance(); ;
 
         builder.RegisterType<CreateProductConsumer>().As<IHostedService>().SingleInstance(); ;
         builder.RegisterType<AddSupplyConsumer>().As<IHostedService>().SingleInstance(); ;
