@@ -17,7 +17,11 @@ namespace Business.RequestHandlers.Product
         public class GetAllProductsResponse
         {
             public int Id { get; set; }
+            public string SKU { get; set; }
             public string Name { get; set; }
+            public int TotalQuantity { get; set; }
+            public double Price { get; set; }
+            public string Category { get; set; }
         }
 
         public class GetAllProductsRequestHandler : IRequestHandler<GetAllProductsRequest, DataResult<List<GetAllProductsResponse>>>
@@ -45,7 +49,10 @@ namespace Business.RequestHandlers.Product
                     var result = products.Select(p => new GetAllProductsResponse
                     {
                         Id = p.Id,
+                        SKU = p.SKU,
                         Name = p.Name,
+                        TotalQuantity = p.TotalQuantity,
+                        Category = p.Category
                     }).ToList();
 
                     return DataResult<List<GetAllProductsResponse>>.Success(result);

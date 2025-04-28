@@ -30,7 +30,7 @@ public class AddSaleConsumer : BackgroundService
         public AddSalesRequestValidator()
         {
             RuleFor(x => x.Quantity)
-             .GreaterThanOrEqualTo(1)
+             .GreaterThan(0)
              .WithMessage("Quantity must be greater than 0.");
 
             RuleFor(x => x.ProductId)
@@ -40,6 +40,10 @@ public class AddSaleConsumer : BackgroundService
             RuleFor(x => x.Quantity)
                 .NotEmpty()
                 .WithMessage("Quantity cannot be empty.");
+
+            RuleFor(x => x.Price)
+                .GreaterThanOrEqualTo(0)
+                .WithMessage("Price must be greater than or equal to 0.");
 
             RuleFor(x => x.Date)
                 .NotEmpty()
@@ -89,7 +93,16 @@ public class AddSaleConsumer : BackgroundService
                 return;
             }
 
-            if (await unitOfWork.Products.CountAsync(msg => msg.Id == message.ProductId) == 0)
+            var order = await unitOfWork.Orders.GetByIdAsync(message.OrderId);
+            if (order == null)
+            {
+                // MAIL SECTION
+                _logger.LogWarning($"Order {message.OrderId} is already processed");
+                return;
+            }
+
+            var product = await unitOfWork.Products.GetByIdAsync(message.ProductId);
+            if (product == null)
             {
                 //MAIL SECTION
                 _logger.LogWarning("Specified product is not found");
@@ -129,10 +142,15 @@ public class AddSaleConsumer : BackgroundService
                 await unitOfWork.ProductSupplies.Update(orderedProductSupply);
             }
 
+            product.TotalQuantity -= message.Quantity;
+            await unitOfWork.Products.Update(product);
+
             var productSale = new ProductSale
             {
                 ProductId = message.ProductId,
+                OrganizationId = message.OrganizationId,
                 Quantity = message.Quantity,
+                Price = message.Price,
                 Date = message.Date
             };
 

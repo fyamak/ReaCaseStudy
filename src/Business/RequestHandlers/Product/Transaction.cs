@@ -21,8 +21,10 @@ namespace Business.RequestHandlers.Product
         public class TransactionResponse
         {
             public int Id { get; set; }
-            public int ProductId { get; set; }
-            public string Type { get; set; } 
+            public string Product { get; set; }
+            public string Organization { get; set; }
+            public string Type { get; set; }
+            public double Price { get; set; }
             public int Quantity { get; set; }
             public DateTime Date { get; set; }
             public int? RemainingQuantity { get; set; }
@@ -75,13 +77,30 @@ namespace Business.RequestHandlers.Product
                             && (!request.ProductId.HasValue || s.ProductId == request.ProductId));
                     var orderedProductSales = productSales.OrderBy(ps => ps.Date).ToList();
 
-              
+
+                    var productIds = orderedProductSupplies.Select(x => x.ProductId)
+                        .Concat(orderedProductSales.Select(x => x.ProductId))
+                        .Distinct().ToList();
+
+                    var organizationIds = orderedProductSupplies.Select(x => x.OrganizationId)
+                        .Concat(orderedProductSales.Select(x => x.OrganizationId))
+                        .Distinct().ToList();
+
+                    var products = await _unitOfWork.Products.FindAsync(p => productIds.Contains(p.Id));
+                    var organizations = await _unitOfWork.Organizations.FindAsync(o => organizationIds.Contains(o.Id));
+
+                    var productNameDict = products.ToDictionary(p => p.Id, p => p.Name);
+                    var organizationNameDict = organizations.ToDictionary(o => o.Id, o => o.Name);
+
+
 
                     var transactions = orderedProductSupplies.Select(p => new TransactionResponse
                     {
                         Id = p.Id,
-                        ProductId = p.ProductId,
+                        Product = productNameDict.GetValueOrDefault(p.ProductId, "Unknown Product"),
+                        Organization = organizationNameDict.GetValueOrDefault(p.OrganizationId, "Unknown Organization"),
                         Type = "Supply",
+                        Price = p.Price,
                         Quantity = p.Quantity,
                         Date = p.Date,
                         RemainingQuantity = p.RemainingQuantity
@@ -90,8 +109,10 @@ namespace Business.RequestHandlers.Product
                     transactions.AddRange(orderedProductSales.Select(s => new TransactionResponse
                     {
                         Id = s.Id,
-                        ProductId = s.ProductId,
+                        Product = productNameDict.GetValueOrDefault(s.ProductId, "Unknown Product"),
+                        Organization = organizationNameDict.GetValueOrDefault(s.OrganizationId, "Unknown Organization"),
                         Type = "Sale",
+                        Price = s.Price,
                         Quantity = s.Quantity,
                         Date = s.Date
                     }));

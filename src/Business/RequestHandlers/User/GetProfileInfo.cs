@@ -21,6 +21,10 @@ public abstract class GetProfileInfo
         public int    Id       { get; set; }
         public string FullName { get; set; } = default!;
         public string Email    { get; set; } = default!;
+        public string PhoneNumber { get; set; } = default!;
+        public string Currency { get; set; } = default!;
+        public bool ReceiveEmail { get; set; } = default!;
+        public bool ReceiveLowStockAlert { get; set; } = default!;
 
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public UserType UserType { get; set; }
@@ -56,7 +60,16 @@ public abstract class GetProfileInfo
                     return DataResult<GetProfileInfoResponse>.Invalid(UserNotFound);
                 }
 
-                var result = new GetProfileInfoResponse { Id = user.Id, Email = user.Email, FullName = user.FullName, UserType = user.UserType };
+                var result = new GetProfileInfoResponse { 
+                    Id = user.Id, 
+                    Email = user.Email,
+                    FullName = user.FullName,
+                    PhoneNumber = user.PhoneNumber,
+                    Currency = user.Currency,
+                    ReceiveEmail = user.ReceiveEmail,
+                    ReceiveLowStockAlert = user.ReceiveLowStockAlert,
+                    UserType = user.UserType 
+                };
 
                 return DataResult<GetProfileInfoResponse>.Success(result);
             }

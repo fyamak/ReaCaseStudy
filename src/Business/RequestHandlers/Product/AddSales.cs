@@ -13,14 +13,20 @@ namespace Business.RequestHandlers.Product
         public class AddSalesRequest : IRequest<DataResult<string>>
         {
             public int ProductId;
+            public int OrganizationId { get; set; }
             public int Quantity { get; set; }
+            public double Price { get; set; }
             public DateTime Date { get; set; }
+            public int OrderId { get; set; }
         }
         public class AddSaleMessage : KafkaMessage
         {
             public int ProductId { get; set; }
+            public int OrganizationId { get; set; }
             public int Quantity { get; set; }
+            public double Price { get; set; }
             public DateTime Date { get; set; }
+            public int OrderId { get; set; }
         }
 
 
@@ -42,8 +48,11 @@ namespace Business.RequestHandlers.Product
                     {
                         Topic = "product-add-sale",
                         ProductId = request.ProductId,
+                        OrganizationId = request.OrganizationId,
                         Quantity = request.Quantity,
-                        Date = request.Date
+                        Price = request.Price,
+                        Date = request.Date,
+                        OrderId = request.OrderId
                     };
 
                     await _kafkaProducer.ProduceAsync(message.Topic, message);

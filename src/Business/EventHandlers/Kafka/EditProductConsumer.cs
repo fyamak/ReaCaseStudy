@@ -93,7 +93,7 @@ public class EditProductConsumer : BackgroundService
 
             product.Name = message.Name;
             product.UpdatedAt = DateTime.UtcNow;
-
+            
             var result = await unitOfWork.Products.Update(product);
 
             // MAIL SECTION

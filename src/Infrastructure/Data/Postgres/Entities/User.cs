@@ -6,6 +6,10 @@ public class User : TrackedBaseEntity<int>
 {
     public string   Email        { get; set; } = default!;
     public string   FullName     { get; set; } = default!;
+    public string   PhoneNumber  { get; set; } = default!;
+    public string   Currency     { get; set; } = default!;
+    public bool     ReceiveEmail { get; set; } = default!;
+    public bool     ReceiveLowStockAlert { get; set; } = default!;
     public byte[]   PasswordSalt { get; set; } = default!;
     public byte[]   PasswordHash { get; set; } = default!;
     public UserType UserType     { get; set; }

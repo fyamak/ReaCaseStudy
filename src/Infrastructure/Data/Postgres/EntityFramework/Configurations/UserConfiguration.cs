@@ -14,6 +14,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.Property(x => x.Email).IsRequired();
         builder.Property(x => x.FullName).IsRequired();
+        builder.Property(x => x.PhoneNumber).IsRequired();
+        builder.Property(x => x.Currency).IsRequired();
+        builder.Property(x => x.ReceiveEmail).HasDefaultValue(false).IsRequired();
+        builder.Property(x => x.ReceiveLowStockAlert).HasDefaultValue(false).IsRequired();
         builder.Property(x => x.PasswordSalt).IsRequired();
         builder.Property(x => x.PasswordHash).IsRequired();
         builder.Property(x => x.UserType).IsRequired();

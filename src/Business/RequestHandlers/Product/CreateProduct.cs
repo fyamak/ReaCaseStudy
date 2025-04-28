@@ -9,16 +9,20 @@ using Business.Services.Kafka.Interface;
 
 namespace Business.RequestHandlers.Product
 {
-    public class CreateProduct
+    public abstract class CreateProduct
     {
         public class CreateProductRequest : IRequest<DataResult<string>>
         {
+            public string SKU { get; set; }
             public string Name { get; set; }
+            public string Category { get; set; }
         }
 
         public class CreateProductMessage : KafkaMessage
         {
+            public string SKU { get; set; }
             public string Name { get; set; }
+            public string Category { get; set; }
         }
 
         public class CreateProductRequestHandler : IRequestHandler<CreateProductRequest, DataResult<string>>
@@ -39,7 +43,9 @@ namespace Business.RequestHandlers.Product
                     var message = new CreateProductMessage
                     {
                         Topic = "product-create",
-                        Name = request.Name
+                        Name = request.Name,
+                        SKU = request.SKU,
+                        Category = request.Category,
                     };
 
                     await _kafkaProducer.ProduceAsync(message.Topic, message);

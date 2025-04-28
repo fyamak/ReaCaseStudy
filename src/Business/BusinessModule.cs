@@ -28,12 +28,14 @@ public class BusinessModule : Module
             .SingleInstance();
 
         
-        builder.RegisterType<KafkaProducerService>().As<IKafkaProducerService>().SingleInstance(); ;
-        builder.RegisterType<KafkaConsumerService>().As<IKafkaConsumerService>().SingleInstance(); ;
+        builder.RegisterType<KafkaProducerService>().As<IKafkaProducerService>().SingleInstance();
+        builder.RegisterType<KafkaConsumerService>().As<IKafkaConsumerService>().SingleInstance();
 
-        builder.RegisterType<CreateProductConsumer>().As<IHostedService>().SingleInstance(); ;
-        builder.RegisterType<AddSupplyConsumer>().As<IHostedService>().SingleInstance(); ;
-        builder.RegisterType<AddSaleConsumer>().As<IHostedService>().SingleInstance(); ;
-        builder.RegisterType<EditProductConsumer>().As<IHostedService>().SingleInstance(); ;
+        builder.RegisterType<CreateProductConsumer>().As<IHostedService>().SingleInstance();
+        builder.RegisterType<AddSupplyConsumer>().As<IHostedService>().SingleInstance();
+        builder.RegisterType<AddSaleConsumer>().As<IHostedService>().SingleInstance();
+        builder.RegisterType<EditProductConsumer>().As<IHostedService>().SingleInstance(); 
+        builder.RegisterType<CreateOrganizationConsumer>().As<IHostedService>().SingleInstance();
+        builder.RegisterType<CreateOrderConsumer>().As<IHostedService>().SingleInstance();
     }
 }

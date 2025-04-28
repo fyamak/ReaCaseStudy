@@ -18,6 +18,8 @@ public class PostgresContext : DbContext
         modelBuilder.ApplyConfiguration(new ProductConfiguration());
         modelBuilder.ApplyConfiguration(new ProductSalesConfiguration());
         modelBuilder.ApplyConfiguration(new ProductSupplyConfiguration());
+        modelBuilder.ApplyConfiguration(new OrganizationConfiguration());
+        modelBuilder.ApplyConfiguration(new OrderConfiguration());
 
         base.OnModelCreating(modelBuilder);
     }
@@ -27,4 +29,6 @@ public class PostgresContext : DbContext
     public DbSet<Product> Products => Set<Product>();
     public DbSet<ProductSale> ProductSales => Set<ProductSale>();
     public DbSet<ProductSupply> ProductSupplies => Set<ProductSupply>();
+    public DbSet<Organization> Organizations => Set<Organization>();
+    public DbSet<Order> Orders => Set<Order>();
 }

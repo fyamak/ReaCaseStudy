@@ -1,4 +1,5 @@
 ﻿using Business.Services.Kafka.Interface;
+using Confluent.Kafka;
 using FluentValidation;
 using Infrastructure.Data.Postgres;
 using Infrastructure.Data.Postgres.Entities;
@@ -41,9 +42,15 @@ public class AddSupplyConsumer : BackgroundService
                 .NotEmpty()
                 .WithMessage("Quantity cannot be empty.");
 
+            RuleFor(x => x.Price)
+                .GreaterThanOrEqualTo(0)
+                .WithMessage("Price must be greater than or equal to 0.");
+
             RuleFor(x => x.Date)
                 .NotEmpty()
                 .WithMessage("Date cannot be empty.");
+
+
         }
     }
 
@@ -57,7 +64,6 @@ public class AddSupplyConsumer : BackgroundService
     private async Task ProcessProductAddSupply(AddSupplyMessage message, CancellationToken cancellationToken)
     {
         var scope = _serviceProvider.CreateScope();
-
         try
         {
             var unitOfWork = scope.ServiceProvider.GetService<IUnitOfWork>();
@@ -88,7 +94,16 @@ public class AddSupplyConsumer : BackgroundService
                 return;
             }
 
-            if (await unitOfWork.Products.CountAsync(msg => msg.Id == message.ProductId) == 0)
+            var order = await unitOfWork.Orders.GetByIdAsync(message.OrderId);
+            if (order == null)
+            {
+                // MAIL SECTION
+                _logger.LogWarning($"Order {message.OrderId} is already processed");
+                return;
+            }
+
+            var product = await unitOfWork.Products.GetByIdAsync(message.ProductId);
+            if (product == null)
             {
                 // MAIL SECTION
                 _logger.LogWarning("Specified product is not found");
@@ -98,11 +113,16 @@ public class AddSupplyConsumer : BackgroundService
             var productSupply = new ProductSupply
             {
                 ProductId = message.ProductId,
+                OrganizationId = message.OrganizationId,
                 Quantity = message.Quantity,
+                Price = message.Price,
                 Date = message.Date,
                 RemainingQuantity = message.Quantity
             };
+            product.TotalQuantity += message.Quantity;
+            
             await unitOfWork.ProductSupplies.AddAsync(productSupply);
+            await unitOfWork.Products.Update(product);
             await unitOfWork.CommitAsync();
 
             // MAIL SECTION

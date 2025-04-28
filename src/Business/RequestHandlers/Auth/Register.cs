@@ -21,6 +21,7 @@ public abstract class Register
         public string Email    { get; set; } = default!;
         public string Password { get; set; } = default!;
         public string FullName { get; set; } = default!;
+        public string PhoneNumber { get; set; } = default!;
     }
 
     public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
@@ -32,6 +33,9 @@ public abstract class Register
             RuleFor(x => x.FullName).NotEmpty().MinimumLength(6)
                 .Must(x => string.IsNullOrEmpty(x) || x.All(c => char.IsLetter(c) || char.IsWhiteSpace(c)))
                 .WithMessage("Full name must contain only letters");
+            RuleFor(x => x.PhoneNumber)
+                .NotEmpty().WithMessage("Phone number cannot be empty");
+
         }
     }
 
@@ -71,6 +75,10 @@ public abstract class Register
                 {
                     Email        = request.Email,
                     FullName     = request.FullName,
+                    PhoneNumber  = request.PhoneNumber,
+                    Currency     = "$",
+                    ReceiveEmail = false,
+                    ReceiveLowStockAlert = false,
                     PasswordHash = passwordHash,
                     PasswordSalt = passwordSalt,
                     UserType     = UserType.User
