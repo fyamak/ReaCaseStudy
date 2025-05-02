@@ -13,9 +13,9 @@ public class OrderController(IMediator mediator) : BaseController(mediator)
 {
     [HttpGet("/orders")]
     [Authorize]
-    public async Task<DataResult<List<GetAllOrders.GetAllOrdersResponse>>> Orders()
+    public async Task<DataResult<List<GetAllOrders.GetAllOrdersResponse>>> Orders([FromQuery] bool? isDeleted = null)
     {
-        return await Mediator.Send(new GetAllOrders.GetAllOrdersRequest());
+        return await Mediator.Send(new GetAllOrders.GetAllOrdersRequest { IsDeleted = isDeleted});
     }
 
     [HttpPost("/orders")]

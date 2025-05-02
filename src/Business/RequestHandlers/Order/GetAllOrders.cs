@@ -12,6 +12,7 @@ public abstract class GetAllOrders
 {
     public class GetAllOrdersRequest : IRequest<DataResult<List<GetAllOrdersResponse>>>
     {
+        public bool? IsDeleted { get; set; }
     }
     public class GetAllOrdersResponse
     {
@@ -22,6 +23,9 @@ public abstract class GetAllOrders
         public double Price { get; set; }
         public DateTime Date { get; set; }
         public string Type { get; set; }
+        public bool? IsSuccessfull { get; set; }
+        public string? Detail { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
 
     public class OrdersRequestHandler : IRequestHandler<GetAllOrdersRequest, DataResult<List<GetAllOrdersResponse>>>
@@ -39,14 +43,21 @@ public abstract class GetAllOrders
         {
             try
             {
-                var orders = await _unitOfWork.Orders.FindAsync(ps => !ps.IsDeleted);
-                var orderedOrders= orders.OrderBy(ps => ps.Date).ToList();
 
-
-                if (!orderedOrders.Any())
+                IList<Infrastructure.Data.Postgres.Entities.Order> orders;
+                if (request.IsDeleted == true)
                 {
-                    return DataResult<List<GetAllOrdersResponse>>.Invalid("No orders found.");
+                    orders = await _unitOfWork.Orders.FindAsync(o => o.IsDeleted == request.IsDeleted, includeDeleted: true);
                 }
+                else
+                {
+                    orders = await _unitOfWork.Orders.GetAllAsync();
+                }
+                //var includeDeleted = request.IsDeleted ?? false;
+
+                //var orders = await _unitOfWork.Orders.FindAsync(o => true, includeDeleted: includeDeleted);
+
+                var orderedOrders= orders.OrderBy(ps => ps.Date).ToList();
 
                 var result = orderedOrders.Select(p => new GetAllOrdersResponse
                 {
@@ -56,7 +67,10 @@ public abstract class GetAllOrders
                     Quantity = p.Quantity,
                     Price = p.Price,
                     Date = p.Date,
-                    Type = p.Type
+                    Type = p.Type,
+                    IsSuccessfull = p.IsSuccessfull,
+                    Detail = p.Detail,
+                    CreatedAt = p.CreatedAt
                 }).ToList();
 
                 return DataResult<List<GetAllOrdersResponse>>.Success(result);

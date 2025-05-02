@@ -84,14 +84,6 @@ public class AddSaleConsumer : BackgroundService
                 return;
             }
 
-            var validator = new AddSalesRequestValidator();
-            var validationResult = validator.Validate(message);
-            if (!validationResult.IsValid)
-            {
-                // MAIL SECTION
-                _logger.LogWarning(validationResult.Errors.First().ErrorMessage);
-                return;
-            }
 
             var order = await unitOfWork.Orders.GetByIdAsync(message.OrderId);
             if (order == null)
@@ -101,13 +93,28 @@ public class AddSaleConsumer : BackgroundService
                 return;
             }
 
+
+            var validator = new AddSalesRequestValidator();
+            var validationResult = validator.Validate(message);
+            if (!validationResult.IsValid)
+            {
+                // MAIL SECTION
+                var validationErrorMessage = validationResult.Errors.First().ErrorMessage;
+                _logger.LogWarning(validationErrorMessage);
+                await FailOrderAsync(order, $"Credentials are invalid. {validationErrorMessage}", unitOfWork);
+                return;
+            }
+
+
             var product = await unitOfWork.Products.GetByIdAsync(message.ProductId);
             if (product == null)
             {
                 //MAIL SECTION
                 _logger.LogWarning("Specified product is not found");
+                await FailOrderAsync(order, "Selected product is not in stock", unitOfWork);
                 return;
             }
+
 
             var productSupplies = await unitOfWork.ProductSupplies
                 .FindAsync(ps => ps.ProductId == message.ProductId && ps.RemainingQuantity > 0 && ps.Date < message.Date);
@@ -118,6 +125,7 @@ public class AddSaleConsumer : BackgroundService
             if (totalAvailableStock < message.Quantity)
             {
                 _logger.LogWarning("Insufficient stock to complete the sale");
+                await FailOrderAsync(order, "Insufficient stock to complete the sale", unitOfWork);
                 return;
             }
 
@@ -155,6 +163,7 @@ public class AddSaleConsumer : BackgroundService
             };
 
             await unitOfWork.ProductSales.AddAsync(productSale);
+            await unitOfWork.Orders.SoftDelete(order);
             await unitOfWork.CommitAsync();
 
             //MAIL SECTION
@@ -174,5 +183,14 @@ public class AddSaleConsumer : BackgroundService
             _logger.LogDebug($"Releasing product-sale-lock:{message.ProductId}");
             scope.Dispose();
         }
+    }
+
+    private async Task FailOrderAsync(Order order, string detail, IUnitOfWork unitOfWork)
+    {
+        order.IsDeleted = true;
+        order.IsSuccessfull = false;
+        order.Detail = detail;
+        await unitOfWork.Orders.Update(order);
+        await unitOfWork.CommitAsync();
     }
 }

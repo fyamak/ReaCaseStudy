@@ -1,12 +1,10 @@
 ﻿using Business.Services.Kafka.Interface;
-using Infrastructure.Data.Postgres;
 using MediatR;
 using Serilog;
 using Serilog.Events;
 using Shared.Extensions;
 using Shared.Models.Kafka;
 using Shared.Models.Results;
-using static Business.RequestHandlers.Product.CreateProduct;
 
 namespace Business.RequestHandlers.Organization;
 

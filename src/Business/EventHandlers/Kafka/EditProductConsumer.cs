@@ -92,9 +92,8 @@ public class EditProductConsumer : BackgroundService
             }
 
             product.Name = message.Name;
-            product.UpdatedAt = DateTime.UtcNow;
-            
-            var result = await unitOfWork.Products.Update(product);
+            await unitOfWork.Products.Update(product);
+            await unitOfWork.CommitAsync();
 
             // MAIL SECTION
             _logger.LogInformation("Product is updated successfully");

@@ -15,14 +15,14 @@ namespace Business.RequestHandlers.Product
         {
             public string SKU { get; set; }
             public string Name { get; set; }
-            public string Category { get; set; }
+            public int CategoryId { get; set; }
         }
 
         public class CreateProductMessage : KafkaMessage
         {
             public string SKU { get; set; }
             public string Name { get; set; }
-            public string Category { get; set; }
+            public int CategoryId { get; set; }
         }
 
         public class CreateProductRequestHandler : IRequestHandler<CreateProductRequest, DataResult<string>>
@@ -45,7 +45,7 @@ namespace Business.RequestHandlers.Product
                         Topic = "product-create",
                         Name = request.Name,
                         SKU = request.SKU,
-                        Category = request.Category,
+                        CategoryId = request.CategoryId,
                     };
 
                     await _kafkaProducer.ProduceAsync(message.Topic, message);

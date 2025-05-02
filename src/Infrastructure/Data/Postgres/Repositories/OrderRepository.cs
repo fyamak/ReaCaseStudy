@@ -14,9 +14,14 @@ namespace Infrastructure.Data.Postgres.Repositories
         public async Task<int> SoftDelete(Order order)
         {
             order.IsDeleted = true;
-            PostgresContext.Orders.Update(order);
+            //PostgresContext.Orders.Update(order);
             return await PostgresContext.SaveChangesAsync();
         }
 
+        public async Task<int> Update(Order order)
+        {
+            PostgresContext.Orders.Update(order);
+            return await PostgresContext.SaveChangesAsync();
+        }
     }
 }

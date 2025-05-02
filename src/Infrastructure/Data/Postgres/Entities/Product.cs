@@ -4,10 +4,10 @@ namespace Infrastructure.Data.Postgres.Entities
 {
     public class Product : TrackedBaseEntity<int>
     {
-        public string Name { get; set; }
-        public string SKU { get; set; }
-        public int TotalQuantity { get; set; }
-        public string Category { get; set; } = default!;
+        public string Name { get; set; } = default!;
+        public string SKU { get; set; } = default!;
+        public int TotalQuantity { get; set; } = default!;
+        public int CategoryId { get; set; } = default!;
         public ICollection<ProductSupply> Supplies { get; set; } = new List<ProductSupply>();
         public ICollection<ProductSale> Sales { get; set; } = new List<ProductSale>();
     }

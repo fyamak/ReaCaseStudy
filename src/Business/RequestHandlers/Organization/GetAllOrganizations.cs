@@ -39,10 +39,6 @@ public abstract class GetAllOrganizations
             try
             {
                 var organizations = await _unitOfWork.Organizations.GetAllAsync();
-                if (organizations == null || !organizations.Any())
-                {
-                    return DataResult<List<GetAllOrganizationsResponse>>.Invalid("No suplly found.");
-                }
 
                 var result = organizations.Select(p => new GetAllOrganizationsResponse
                 {

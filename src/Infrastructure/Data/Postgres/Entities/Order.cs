@@ -10,5 +10,7 @@ namespace Infrastructure.Data.Postgres.Entities
         public double Price { get; set; }
         public DateTime Date { get; set; }
         public string Type { get; set; }
+        public bool? IsSuccessfull { get; set; }
+        public string? Detail { get; set; }
     }
 }

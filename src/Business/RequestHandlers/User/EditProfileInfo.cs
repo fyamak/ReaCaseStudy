@@ -60,7 +60,6 @@ public abstract class EditProfileInfo
                 if (request.ReceiveLowStockAlert.HasValue)
                     user.ReceiveLowStockAlert = request.ReceiveLowStockAlert.Value;
 
-                user.UpdatedAt = DateTime.UtcNow;
                 await _unitOfWork.Users.Update(user);
                 await _unitOfWork.CommitAsync();
 

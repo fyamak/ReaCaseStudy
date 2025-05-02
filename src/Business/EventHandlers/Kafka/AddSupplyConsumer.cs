@@ -83,17 +83,8 @@ public class AddSupplyConsumer : BackgroundService
                 _logger.LogWarning($"Could not acquire lock for product supply: {message.ProductId}");
                 return;
             }
+
             
-            var validator = new AddSupplyRequestValidator();
-            var validationResult = validator.Validate(message);
-
-            if (!validationResult.IsValid)
-            {
-                // MAIL SECTION
-                _logger.LogWarning(validationResult.Errors.First().ErrorMessage);
-                return;
-            }
-
             var order = await unitOfWork.Orders.GetByIdAsync(message.OrderId);
             if (order == null)
             {
@@ -101,15 +92,32 @@ public class AddSupplyConsumer : BackgroundService
                 _logger.LogWarning($"Order {message.OrderId} is already processed");
                 return;
             }
+            order.IsDeleted = true;
 
+
+            var validator = new AddSupplyRequestValidator();
+            var validationResult = validator.Validate(message);
+
+            if (!validationResult.IsValid)
+            {
+                // MAIL 
+                var validationErrorMessage = validationResult.Errors.First().ErrorMessage;
+                _logger.LogWarning(validationErrorMessage);
+                await FailOrderAsync(order, $"Credentials are invalid. {validationErrorMessage}", unitOfWork);
+                return;
+            }
+
+            
             var product = await unitOfWork.Products.GetByIdAsync(message.ProductId);
             if (product == null)
             {
                 // MAIL SECTION
                 _logger.LogWarning("Specified product is not found");
+                await FailOrderAsync(order, "Selected product is not in stock", unitOfWork);
                 return;
             }
 
+            
             var productSupply = new ProductSupply
             {
                 ProductId = message.ProductId,
@@ -120,13 +128,18 @@ public class AddSupplyConsumer : BackgroundService
                 RemainingQuantity = message.Quantity
             };
             product.TotalQuantity += message.Quantity;
+
+
+            order.IsSuccessfull = true;
+            order.Detail = "Product supply is successfull";
             
+            await unitOfWork.Orders.Update(order);
             await unitOfWork.ProductSupplies.AddAsync(productSupply);
             await unitOfWork.Products.Update(product);
             await unitOfWork.CommitAsync();
 
             // MAIL SECTION
-            _logger.LogInformation("Product suplly addition is successfull");
+            _logger.LogInformation("Product supply addition is successfull");
             return;
         }
         catch (Exception ex)
@@ -141,5 +154,14 @@ public class AddSupplyConsumer : BackgroundService
             scope.Dispose();
         }
         
+    }
+
+    private async Task FailOrderAsync(Order order, string detail, IUnitOfWork unitOfWork)
+    {
+        order.IsDeleted = true;
+        order.IsSuccessfull = false;
+        order.Detail = detail;
+        await unitOfWork.Orders.Update(order);
+        await unitOfWork.CommitAsync();
     }
 }

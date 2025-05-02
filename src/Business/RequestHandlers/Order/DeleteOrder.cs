@@ -36,7 +36,10 @@ public abstract class DeleteOrder
                     return DataResult<string>.Invalid("Invalid order Id");
                 }
 
-                await _unitOfWork.Orders.SoftDelete(order);
+                order.IsSuccessfull = false;
+                order.Detail = "Rejected by user";
+                order.IsDeleted = true;
+                await _unitOfWork.Orders.Update(order);
                 await _unitOfWork.CommitAsync();
 
                 return DataResult<string>.Success($"Order {request.Id} is successfully deleted.");

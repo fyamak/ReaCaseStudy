@@ -5,6 +5,7 @@ using Infrastructure.Data.Postgres.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Shared.Models.Results;
 using static Business.RequestHandlers.Product.CreateProduct;
 
 namespace Business.EventHandlers.Kafka;
@@ -67,11 +68,19 @@ public class CreateProductConsumer : BackgroundService
                 _logger.LogWarning("Product with same stock code (SKU) already exists");
                 return;
             }
+
+            var category = await unitOfWork.Categories.GetByIdAsync(message.CategoryId);
+            if (category == null)
+            {
+                _logger.LogWarning("Invalid category");
+                return;
+            }
+
             var product = new Product
             { 
                 Name = message.Name ,
                 SKU = message.SKU,
-                Category = message.Category,
+                CategoryId = message.CategoryId,
                 TotalQuantity = 0
             };
             await unitOfWork.Products.AddAsync(product);
