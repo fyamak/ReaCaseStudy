@@ -34,6 +34,11 @@ builder.Services.AddCors(options => options.AddPolicy("CorsPolicy", cBuilder =>
         .AllowAnyHeader()
         .AllowAnyMethod()
         .AllowCredentials();
+
+    cBuilder.WithOrigins("http://192.168.1.110:3000")
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials();
 }));
 
 builder.Services.AddSwaggerGen(options =>

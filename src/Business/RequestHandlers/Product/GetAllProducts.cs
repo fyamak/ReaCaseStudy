@@ -4,6 +4,7 @@ using Shared.Models.Results;
 using Serilog;
 using Shared.Extensions;
 using Infrastructure.Data.Postgres;
+using Infrastructure.Data.Postgres.Entities;
 
 
 namespace Business.RequestHandlers.Product
@@ -17,7 +18,11 @@ namespace Business.RequestHandlers.Product
         public class GetAllProductsResponse
         {
             public int Id { get; set; }
+            public string SKU { get; set; }
             public string Name { get; set; }
+            public int TotalQuantity { get; set; }
+            public double Price { get; set; }
+            public int CategoryId { get; set; } = default!;
         }
 
         public class GetAllProductsRequestHandler : IRequestHandler<GetAllProductsRequest, DataResult<List<GetAllProductsResponse>>>
@@ -37,15 +42,13 @@ namespace Business.RequestHandlers.Product
                 {
                     var products = await _unitOfWork.Products.GetAllAsync();
 
-                    if (products == null || !products.Any())
-                    {
-                        return DataResult<List<GetAllProductsResponse>>.Invalid("No products found.");
-                    }
-
                     var result = products.Select(p => new GetAllProductsResponse
                     {
                         Id = p.Id,
+                        SKU = p.SKU,
                         Name = p.Name,
+                        TotalQuantity = p.TotalQuantity,
+                        CategoryId = p.CategoryId
                     }).ToList();
 
                     return DataResult<List<GetAllProductsResponse>>.Success(result);

@@ -9,5 +9,8 @@ public interface IUnitOfWork : IDisposable
     IProductRepository Products { get; }
     IProductSaleRepository ProductSales { get; }
     IProductSupplyRepository ProductSupplies { get; }
+    IOrganizationRepository Organizations { get; }
+    IOrderRepository Orders { get; }
+    ICategoryRepository Categories { get; }
     Task<int>            CommitAsync();
 }

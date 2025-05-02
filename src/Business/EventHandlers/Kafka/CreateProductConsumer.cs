@@ -1,9 +1,11 @@
 ﻿using Business.Services.Kafka.Interface;
 using FluentValidation;
 using Infrastructure.Data.Postgres;
+using Infrastructure.Data.Postgres.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Shared.Models.Results;
 using static Business.RequestHandlers.Product.CreateProduct;
 
 namespace Business.EventHandlers.Kafka;
@@ -30,6 +32,9 @@ public class CreateProductConsumer : BackgroundService
         {
             RuleFor(x => x.Name).NotEmpty().MinimumLength(2)
                 .WithMessage("Name must be at least two length.");
+
+            RuleFor(x => x.SKU).NotEmpty().WithMessage("Stock code (SKU) cannot be empty.");
+            //RuleFor(x => x.Category).NotEmpty().WithMessage("Stock code (SKU) cannot be empty.");
         }
     }
 
@@ -57,13 +62,27 @@ public class CreateProductConsumer : BackgroundService
                 return;
             }
 
-            if (await unitOfWork.Products.CountAsync(msg => msg.Name == message.Name) > 0)
+            if (await unitOfWork.Products.CountAsync(msg => msg.SKU == message.SKU) > 0)
             {
                 // MAIL SECTION
-                _logger.LogWarning("Product with same name already exists");
+                _logger.LogWarning("Product with same stock code (SKU) already exists");
                 return;
             }
-            var product = new Infrastructure.Data.Postgres.Entities.Product { Name = message.Name };
+
+            var category = await unitOfWork.Categories.GetByIdAsync(message.CategoryId);
+            if (category == null)
+            {
+                _logger.LogWarning("Invalid category");
+                return;
+            }
+
+            var product = new Product
+            { 
+                Name = message.Name ,
+                SKU = message.SKU,
+                CategoryId = message.CategoryId,
+                TotalQuantity = 0
+            };
             await unitOfWork.Products.AddAsync(product);
             await unitOfWork.CommitAsync();
 

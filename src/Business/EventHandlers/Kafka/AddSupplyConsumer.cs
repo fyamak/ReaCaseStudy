@@ -1,4 +1,5 @@
 ﻿using Business.Services.Kafka.Interface;
+using Confluent.Kafka;
 using FluentValidation;
 using Infrastructure.Data.Postgres;
 using Infrastructure.Data.Postgres.Entities;
@@ -41,9 +42,15 @@ public class AddSupplyConsumer : BackgroundService
                 .NotEmpty()
                 .WithMessage("Quantity cannot be empty.");
 
+            RuleFor(x => x.Price)
+                .GreaterThanOrEqualTo(0)
+                .WithMessage("Price must be greater than or equal to 0.");
+
             RuleFor(x => x.Date)
                 .NotEmpty()
                 .WithMessage("Date cannot be empty.");
+
+
         }
     }
 
@@ -57,7 +64,6 @@ public class AddSupplyConsumer : BackgroundService
     private async Task ProcessProductAddSupply(AddSupplyMessage message, CancellationToken cancellationToken)
     {
         var scope = _serviceProvider.CreateScope();
-
         try
         {
             var unitOfWork = scope.ServiceProvider.GetService<IUnitOfWork>();
@@ -77,36 +83,63 @@ public class AddSupplyConsumer : BackgroundService
                 _logger.LogWarning($"Could not acquire lock for product supply: {message.ProductId}");
                 return;
             }
+
             
+            var order = await unitOfWork.Orders.GetByIdAsync(message.OrderId);
+            if (order == null)
+            {
+                // MAIL SECTION
+                _logger.LogWarning($"Order {message.OrderId} is already processed");
+                return;
+            }
+            order.IsDeleted = true;
+
+
             var validator = new AddSupplyRequestValidator();
             var validationResult = validator.Validate(message);
 
             if (!validationResult.IsValid)
             {
-                // MAIL SECTION
-                _logger.LogWarning(validationResult.Errors.First().ErrorMessage);
+                // MAIL 
+                var validationErrorMessage = validationResult.Errors.First().ErrorMessage;
+                _logger.LogWarning(validationErrorMessage);
+                await FailOrderAsync(order, $"Credentials are invalid. {validationErrorMessage}", unitOfWork);
                 return;
             }
 
-            if (await unitOfWork.Products.CountAsync(msg => msg.Id == message.ProductId) == 0)
+            
+            var product = await unitOfWork.Products.GetByIdAsync(message.ProductId);
+            if (product == null)
             {
                 // MAIL SECTION
                 _logger.LogWarning("Specified product is not found");
+                await FailOrderAsync(order, "Selected product is not in stock", unitOfWork);
                 return;
             }
 
+            
             var productSupply = new ProductSupply
             {
                 ProductId = message.ProductId,
+                OrganizationId = message.OrganizationId,
                 Quantity = message.Quantity,
+                Price = message.Price,
                 Date = message.Date,
                 RemainingQuantity = message.Quantity
             };
+            product.TotalQuantity += message.Quantity;
+
+
+            order.IsSuccessfull = true;
+            order.Detail = "Product supply is successfull";
+            
+            await unitOfWork.Orders.Update(order);
             await unitOfWork.ProductSupplies.AddAsync(productSupply);
+            await unitOfWork.Products.Update(product);
             await unitOfWork.CommitAsync();
 
             // MAIL SECTION
-            _logger.LogInformation("Product suplly addition is successfull");
+            _logger.LogInformation("Product supply addition is successfull");
             return;
         }
         catch (Exception ex)
@@ -121,5 +154,14 @@ public class AddSupplyConsumer : BackgroundService
             scope.Dispose();
         }
         
+    }
+
+    private async Task FailOrderAsync(Order order, string detail, IUnitOfWork unitOfWork)
+    {
+        order.IsDeleted = true;
+        order.IsSuccessfull = false;
+        order.Detail = detail;
+        await unitOfWork.Orders.Update(order);
+        await unitOfWork.CommitAsync();
     }
 }

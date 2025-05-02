@@ -15,7 +15,9 @@ namespace Infrastructure.Data.Postgres.EntityFramework.Configurations
         {
             builder.HasKey(x => x.Id);
             builder.Property(x => x.ProductId).IsRequired();
+            builder.Property(x => x.OrganizationId).IsRequired();
             builder.Property(x => x.Quantity).IsRequired();
+            builder.Property(x => x.Price).IsRequired();
             builder.Property(x => x.Date).IsRequired();
             builder.Property(x => x.IsDeleted).HasDefaultValue(false).IsRequired();
 
@@ -23,6 +25,11 @@ namespace Infrastructure.Data.Postgres.EntityFramework.Configurations
                 .WithMany(x => x.Sales)
                 .HasForeignKey(x => x.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne(x => x.Organization)
+                .WithMany()
+                .HasForeignKey(x => x.OrganizationId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

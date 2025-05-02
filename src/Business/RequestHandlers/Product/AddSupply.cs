@@ -17,15 +17,21 @@ namespace Business.RequestHandlers.Product
         public class AddSupplyRequest : IRequest<DataResult<string>>
         {
             public int ProductId;
+            public int OrganizationId { get; set; }
             public int Quantity { get; set; }
+            public double Price { get; set; }
             public DateTime Date { get; set; }
+            public int OrderId { get; set; }
         }
 
         public class AddSupplyMessage : KafkaMessage
         {
             public int ProductId { get; set; }
+            public int OrganizationId { get; set; }
             public int Quantity { get; set; }
+            public double Price { get; set; }
             public DateTime Date { get; set; }
+            public int OrderId { get; set; }
         }
 
         public class AddSupplyRequestHandler : IRequestHandler<AddSupplyRequest, DataResult<string>>
@@ -46,10 +52,12 @@ namespace Business.RequestHandlers.Product
                     {
                         Topic = "product-add-supply",
                         ProductId = request.ProductId,
+                        OrganizationId = request.OrganizationId,
                         Quantity = request.Quantity,
-                        Date = request.Date
+                        Price = request.Price,
+                        Date = request.Date,
+                        OrderId = request.OrderId
                     };
-
                     await _kafkaProducer.ProduceAsync(message.Topic, message);
                     return DataResult<string>.Success("Adding supply to product request accepted");
 

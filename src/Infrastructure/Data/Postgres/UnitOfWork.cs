@@ -18,12 +18,19 @@ public class UnitOfWork : IUnitOfWork
     private ProductRepository? _productRepository;
     private ProductSupplyRepository? _productSupplyRepository;
     private ProductSaleRepository? _productSaleRepository;
+    private OrganizationRepository? _organizationRepository;
+    private OrderRepository? _orderRepository;
+    private CategoryRepository? _categoryRepository;
 
     public IUserRepository Users => _userRepository ??= new UserRepository(_postgresContext);
     public IUserTokenRepository UserTokens => _userTokenRepository ??= new UserTokenRepository(_postgresContext);
     public IProductRepository Products => _productRepository ??= new ProductRepository(_postgresContext);
     public IProductSupplyRepository ProductSupplies => _productSupplyRepository ??= new ProductSupplyRepository(_postgresContext);
     public IProductSaleRepository ProductSales => _productSaleRepository ??= new ProductSaleRepository(_postgresContext);
+    public IOrganizationRepository Organizations => _organizationRepository ??= new OrganizationRepository(_postgresContext);
+    public IOrderRepository Orders => _orderRepository ??= new OrderRepository(_postgresContext);
+    public ICategoryRepository Categories => _categoryRepository ??= new CategoryRepository(_postgresContext);
+
 
     public UnitOfWork(PostgresContext postgresContext, IMediator mediator)
     {

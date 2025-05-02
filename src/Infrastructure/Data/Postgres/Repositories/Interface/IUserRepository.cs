@@ -5,4 +5,5 @@ namespace Infrastructure.Data.Postgres.Repositories.Interface;
 
 public interface IUserRepository : ITrackedEntityRepository<User, int>
 {
+    public Task<int> Update(User user);
 }

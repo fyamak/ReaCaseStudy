@@ -15,4 +15,12 @@ public class UserController(IMediator mediator) : BaseController(mediator)
     {
         return Mediator.Send(request);
     }
+
+    [HttpPatch]
+    [Authorize]
+    public async Task<DataResult<string>> EditProfilInfo(EditProfileInfo.EditProfileInfoRequest request)
+    {
+        return await Mediator.Send(request);
+    }
+
 }
