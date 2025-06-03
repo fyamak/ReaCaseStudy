@@ -116,7 +116,7 @@ public class AddSupplyConsumer : BackgroundService
                 await FailOrderAsync(order, "Selected product is not in stock", unitOfWork);
                 return;
             }
-
+           
             
             var productSupply = new ProductSupply
             {
@@ -132,7 +132,8 @@ public class AddSupplyConsumer : BackgroundService
 
             order.IsSuccessfull = true;
             order.Detail = "Product supply is successfull";
-            
+            order.UpdatedAt = DateTime.UtcNow;
+
             await unitOfWork.Orders.Update(order);
             await unitOfWork.ProductSupplies.AddAsync(productSupply);
             await unitOfWork.Products.Update(product);
@@ -161,6 +162,7 @@ public class AddSupplyConsumer : BackgroundService
         order.IsDeleted = true;
         order.IsSuccessfull = false;
         order.Detail = detail;
+        order.UpdatedAt = DateTime.UtcNow;
         await unitOfWork.Orders.Update(order);
         await unitOfWork.CommitAsync();
     }

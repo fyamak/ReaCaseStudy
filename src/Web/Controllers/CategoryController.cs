@@ -1,4 +1,5 @@
 ﻿using Business.RequestHandlers.Category;
+using Business.RequestHandlers.Organization;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Models.Results;
@@ -19,7 +20,7 @@ public class CategoryController(IMediator mediator) : BaseController(mediator)
 
     [HttpPost]
     [Authorize]
-    public async Task<DataResult<string>> Categories(CreateCategory.CreateCategoryRequest request)
+    public async Task<DataResult<CreateCategory.CreateCategoryResponse>> Categories(CreateCategory.CreateCategoryRequest request)
     {
         return await Mediator.Send(request);
     }
@@ -33,4 +34,18 @@ public class CategoryController(IMediator mediator) : BaseController(mediator)
         return await Mediator.Send(new DeleteCategory.DeleteCategoryRequest { Id = id });
     }
 
+    [HttpGet("Paged")]
+    //[Authorize]
+    public async Task<PagedResult<GetPagedCategories.GetPagedCategoriesResponse>> OrganizationsPaged(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? search = null)
+    {
+        return await Mediator.Send(new GetPagedCategories.GetPagedCategoriesRequest
+        {
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            Search = search
+        });
+    }
 }

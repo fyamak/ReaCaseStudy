@@ -70,9 +70,50 @@ public class ProductController(IMediator mediator) : BaseController(mediator)
 
 
     [HttpGet("/dash")]
-    [Authorize]
+    //[Authorize]
     public async Task<DataResult<GetDashboardInformation.GetDashboardInformationResponse>> Dash()
     {
         return await Mediator.Send(new GetDashboardInformation.GetDashboardInformationRequest());
+    }
+
+
+    [HttpGet("/Products/Paged")]
+    //[Authorize]
+    public async Task<PagedResult<GetPagedProducts.GetPagedProductsResponse>> ProductsPaged(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? search = null,
+        [FromQuery] int? categoryId= null)
+    {
+        return await Mediator.Send(new GetPagedProducts.GetPagedProductsRequest
+        {
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            Search = search,
+            CategoryId = categoryId
+        });
+    }
+
+
+    [HttpGet("/Paged/Transactions")]
+    //[Authorize]
+    public async Task<PagedResult<PagedTransaction.PagedTransactionResponse>> PagedTransaction(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] DateTime startDate = default!,
+        [FromQuery] DateTime endDate = default!,
+        [FromQuery] bool includeFailures = default!,
+        [FromQuery] int? productId = null
+        )
+    {
+        return await Mediator.Send(new PagedTransaction.PagedTransactionRequest
+        {
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            StartDate = startDate,
+            EndDate = endDate,
+            IncludeFailures = includeFailures,
+            ProductId = productId
+        });
     }
 }

@@ -12,5 +12,8 @@ namespace Infrastructure.Data.Postgres.Entities
         public string Type { get; set; }
         public bool? IsSuccessfull { get; set; }
         public string? Detail { get; set; }
+        public Product Product { get; set; } = default!;
+        public Organization Organization { get; set; } = default!;
+
     }
 }

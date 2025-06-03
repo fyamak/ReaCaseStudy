@@ -31,4 +31,23 @@ public class OrderController(IMediator mediator) : BaseController(mediator)
     {
         return await Mediator.Send(new DeleteOrder.DeleteOrderRequest { Id = id });
     }
+
+    [HttpGet("Paged")]
+    //[Authorize]
+    public async Task<PagedResult<GetPagedOrders.GetPagedOrdersResponse>> PagedOrders(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] bool isDeleted = false,
+        [FromQuery] string? search = null,
+        [FromQuery] string? type = null)
+    {
+        return await Mediator.Send(new GetPagedOrders.GetPagedOrdersRequest
+        {
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            IsDeleted = isDeleted,
+            Search = search,
+            Type = type
+        });
+    }
 }

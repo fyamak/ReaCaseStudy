@@ -133,4 +133,56 @@ public abstract class TrackedEntityRepository<TEntity, TId> : ITrackedEntityRepo
             entityToRemove.IsDeleted = true;
         }
     }
+
+    //public async Task<(IList<TEntity> Data, int TotalCount)> GetSimplePagedAsync(
+    //    int pageNumber,
+    //    int pageSize,
+    //    bool includeDeleted = false,
+    //    bool tracked = false)
+    //{
+    //    var query = includeDeleted
+    //        ? PostgresContext.Set<TEntity>()
+    //        : PostgresContext.Set<TEntity>().Where(x => !x.IsDeleted);
+
+    //    var totalCount = await query.CountAsync();
+
+    //    var data = await query
+    //        .Skip((pageNumber - 1) * pageSize)
+    //        .Take(pageSize)
+    //        .AsNoTracking()
+    //        .ToListAsync();
+
+    //    return (data, totalCount);
+    //}
+    
+    //public async Task<(IList<TEntity> Data, int TotalCount)> GetFilteredPagedAsync(
+    //    Expression<Func<TEntity, bool>> predicate,
+    //    int pageNumber,
+    //    int pageSize,
+    //    bool includeDeleted = false,
+    //    bool tracked = false,
+    //    Func<IQueryable<TEntity>, IQueryable<TEntity>>? includes = null)
+    //{
+    //    var query = PostgresContext.Set<TEntity>().Where(predicate);
+
+    //    if (!includeDeleted)
+    //    {
+    //        query = query.Where(x => !x.IsDeleted);
+    //    }
+
+    //    if (includes != null)
+    //    {
+    //        query = includes(query);
+    //    }
+
+    //    var totalCount = await query.CountAsync();
+
+    //    var queryBuilder = query.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+
+    //    var data = tracked
+    //        ? await queryBuilder.ToListAsync()
+    //        : await queryBuilder.AsNoTracking().ToListAsync();
+
+    //    return (data, totalCount);
+    //}
 }
