@@ -162,6 +162,10 @@ public class AddSaleConsumer : BackgroundService
                 Date = message.Date
             };
 
+            order.IsSuccessfull = true;
+            order.Detail = "Product sale is successfull";
+            order.UpdatedAt = DateTime.UtcNow;
+
             await unitOfWork.ProductSales.AddAsync(productSale);
             await unitOfWork.Orders.SoftDelete(order);
             await unitOfWork.CommitAsync();
@@ -190,6 +194,7 @@ public class AddSaleConsumer : BackgroundService
         order.IsDeleted = true;
         order.IsSuccessfull = false;
         order.Detail = detail;
+        order.UpdatedAt = DateTime.UtcNow;
         await unitOfWork.Orders.Update(order);
         await unitOfWork.CommitAsync();
     }

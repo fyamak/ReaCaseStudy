@@ -36,7 +36,7 @@ public abstract class GetAllCategories
             try
             {
                 var categories = await _unitOfWork.Categories.GetAllAsync();
-
+                
                 var result = categories.Select(c => new GetAllCategoriesResponse
                 {
                     Id = c.Id,

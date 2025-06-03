@@ -16,6 +16,13 @@ namespace Infrastructure.Data.Postgres.EntityFramework.Configurations
             builder.Property(x => x.SKU).IsRequired();
 
             builder.Property(x => x.IsDeleted).HasDefaultValue(false).IsRequired();
+
+            builder
+                .HasOne(p => p.Category)
+                .WithMany(p => p.Products)
+                .HasForeignKey(p => p.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
         }
     }
 }

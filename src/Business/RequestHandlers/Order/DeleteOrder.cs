@@ -39,6 +39,7 @@ public abstract class DeleteOrder
                 order.IsSuccessfull = false;
                 order.Detail = "Rejected by user";
                 order.IsDeleted = true;
+                order.UpdatedAt = DateTime.UtcNow;  
                 await _unitOfWork.Orders.Update(order);
                 await _unitOfWork.CommitAsync();
 

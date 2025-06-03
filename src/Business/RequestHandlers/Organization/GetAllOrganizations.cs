@@ -1,6 +1,5 @@
 ﻿using Infrastructure.Data.Postgres;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
 using Shared.Extensions;

@@ -30,4 +30,20 @@ public class OrganizationController(IMediator mediator) : BaseController(mediato
     {
         return await Mediator.Send(new DeleteOrganization.DeleteOrganizationRequest { Id = id});
     }
+
+    [HttpGet("Paged")]
+    //[Authorize]
+    public async Task<PagedResult<GetPagedOrganizations.GetPagedOrganizationsResponse>> OrganizationsPaged(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? search = null)
+    {
+        return await Mediator.Send(new GetPagedOrganizations.GetPagedOrganizationsRequest
+        {
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            Search = search
+        });
+    }
+
 }

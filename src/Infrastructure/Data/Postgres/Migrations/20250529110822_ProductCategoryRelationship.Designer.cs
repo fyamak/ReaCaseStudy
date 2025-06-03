@@ -3,17 +3,20 @@ using System;
 using Infrastructure.Data.Postgres.EntityFramework;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Infrastructure.Data.Postgres.EntityFramework.Migrations
+namespace Infrastructure.Data.Postgres.Migrations
 {
     [DbContext(typeof(PostgresContext))]
-    partial class PostgresContextModelSnapshot : ModelSnapshot
+    [Migration("20250529110822_ProductCategoryRelationship")]
+    partial class ProductCategoryRelationship
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -98,8 +101,6 @@ namespace Infrastructure.Data.Postgres.EntityFramework.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("OrganizationId");
 
                     b.HasIndex("ProductId");
 
@@ -368,19 +369,11 @@ namespace Infrastructure.Data.Postgres.EntityFramework.Migrations
 
             modelBuilder.Entity("Infrastructure.Data.Postgres.Entities.Order", b =>
                 {
-                    b.HasOne("Infrastructure.Data.Postgres.Entities.Organization", "Organization")
-                        .WithMany("Orders")
-                        .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("Infrastructure.Data.Postgres.Entities.Product", "Product")
-                        .WithMany("Orders")
+                        .WithMany()
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Organization");
 
                     b.Navigation("Product");
                 });
@@ -450,15 +443,8 @@ namespace Infrastructure.Data.Postgres.EntityFramework.Migrations
                     b.Navigation("Products");
                 });
 
-            modelBuilder.Entity("Infrastructure.Data.Postgres.Entities.Organization", b =>
-                {
-                    b.Navigation("Orders");
-                });
-
             modelBuilder.Entity("Infrastructure.Data.Postgres.Entities.Product", b =>
                 {
-                    b.Navigation("Orders");
-
                     b.Navigation("Sales");
 
                     b.Navigation("Supplies");

@@ -3,17 +3,20 @@ using System;
 using Infrastructure.Data.Postgres.EntityFramework;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Infrastructure.Data.Postgres.EntityFramework.Migrations
+namespace Infrastructure.Data.Postgres.Migrations
 {
     [DbContext(typeof(PostgresContext))]
-    partial class PostgresContextModelSnapshot : ModelSnapshot
+    [Migration("20250520134159_OrderUpdated")]
+    partial class OrderUpdated
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -99,8 +102,6 @@ namespace Infrastructure.Data.Postgres.EntityFramework.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OrganizationId");
-
                     b.HasIndex("ProductId");
 
                     b.ToTable("Orders");
@@ -183,8 +184,6 @@ namespace Infrastructure.Data.Postgres.EntityFramework.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CategoryId");
 
                     b.HasIndex("SKU")
                         .IsUnique();
@@ -368,32 +367,13 @@ namespace Infrastructure.Data.Postgres.EntityFramework.Migrations
 
             modelBuilder.Entity("Infrastructure.Data.Postgres.Entities.Order", b =>
                 {
-                    b.HasOne("Infrastructure.Data.Postgres.Entities.Organization", "Organization")
-                        .WithMany("Orders")
-                        .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("Infrastructure.Data.Postgres.Entities.Product", "Product")
-                        .WithMany("Orders")
+                        .WithMany()
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Organization");
 
                     b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("Infrastructure.Data.Postgres.Entities.Product", b =>
-                {
-                    b.HasOne("Infrastructure.Data.Postgres.Entities.Category", "Category")
-                        .WithMany("Products")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Category");
                 });
 
             modelBuilder.Entity("Infrastructure.Data.Postgres.Entities.ProductSale", b =>
@@ -445,20 +425,8 @@ namespace Infrastructure.Data.Postgres.EntityFramework.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Infrastructure.Data.Postgres.Entities.Category", b =>
-                {
-                    b.Navigation("Products");
-                });
-
-            modelBuilder.Entity("Infrastructure.Data.Postgres.Entities.Organization", b =>
-                {
-                    b.Navigation("Orders");
-                });
-
             modelBuilder.Entity("Infrastructure.Data.Postgres.Entities.Product", b =>
                 {
-                    b.Navigation("Orders");
-
                     b.Navigation("Sales");
 
                     b.Navigation("Supplies");
