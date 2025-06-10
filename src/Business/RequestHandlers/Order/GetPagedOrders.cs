@@ -1,4 +1,6 @@
-﻿using Infrastructure.Data.Postgres;
+﻿using Business.Mediator.Behaviours.Requests;
+using FluentValidation;
+using Infrastructure.Data.Postgres;
 using MediatR;
 using Serilog;
 using Serilog.Events;
@@ -9,7 +11,7 @@ namespace Business.RequestHandlers.Order;
 
 public abstract class GetPagedOrders
 {
-    public class GetPagedOrdersRequest : IRequest<PagedResult<GetPagedOrdersResponse>>
+    public class GetPagedOrdersRequest : IRequest<PagedResult<GetPagedOrdersResponse>>, IRequestToValidate
     {
         public int PageNumber { get; set; }
         public int PageSize { get; set; }
@@ -34,6 +36,15 @@ public abstract class GetPagedOrders
         public string? Detail { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+    }
+
+    public class GetPagedOrdersRequestValidator : AbstractValidator<GetPagedOrdersRequest>
+    {
+        public GetPagedOrdersRequestValidator()
+        {
+            RuleFor(x => x.PageNumber).GreaterThan(0).WithMessage("Page number must be bigger than 0");
+            RuleFor(x => x.PageSize).GreaterThan(0).WithMessage("Page number must be bigger than 0");
+        }
     }
 
     public class GetPagedOrdersRequestHandler : IRequestHandler<GetPagedOrdersRequest, PagedResult<GetPagedOrdersResponse>>

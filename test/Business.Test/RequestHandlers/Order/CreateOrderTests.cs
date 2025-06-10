@@ -1,16 +1,17 @@
 ﻿using Autofac;
-using Business.RequestHandlers.Product;
+using Business.RequestHandlers.Order;
 using Moq;
 using Shared.Models.Results;
 using Business.Services.Kafka.Interface;
+using Serilog;
 
-namespace Business.Test.RequestHandlers.Product;
+namespace Business.Test.RequestHandlers.Order;
 
-public class AddSupplyTests : BaseHandlerTest
+public class CreateOrderTests : BaseHandlerTest
 {
     private readonly Mock<IKafkaProducerService> _mockKafkaProducer;
 
-    public AddSupplyTests()
+    public CreateOrderTests()
     {
         _mockKafkaProducer = new Mock<IKafkaProducerService>();
 
@@ -20,99 +21,108 @@ public class AddSupplyTests : BaseHandlerTest
     }
 
     [Fact]
-    public async Task AddSupply_Success_When_Request_Is_Valid_Test()
+    public async Task CreateOrder_Success_When_Request_Is_Valid_Test()
     {
-        var request = new AddSupply.AddSupplyRequest
+        var request = new CreateOrder.CreateOrderRequest
         {
             ProductId = 1,
             OrganizationId = 1,
-            Quantity = 1,
-            Price = 1.1,
+            Quantity = 5,
+            Price = 99.99,
             Date = DateTime.UtcNow,
-            OrderId = 1
+            Type = "supply"
         };
 
         _mockKafkaProducer.Setup(x =>
-            x.ProduceAsync(It.IsAny<string>(), It.IsAny<AddSupply.AddSupplyMessage>()))
+            x.ProduceAsync(It.IsAny<string>(), It.IsAny<CreateOrder.CreateOrderMessage>()))
             .Returns(Task.CompletedTask);
 
         var response = await Mediator.Send(request);
 
         Assert.Equal(ResultStatus.Success, response.Status);
-        Assert.Equal("Adding supply to product request accepted", response.Data);
+        Assert.Equal("Order creation request accepted", response.Data);
 
         _mockKafkaProducer.Verify(x =>
-            x.ProduceAsync("product-add-supply", It.Is<AddSupply.AddSupplyMessage>(m =>
+            x.ProduceAsync("order-create", It.Is<CreateOrder.CreateOrderMessage>(m =>
                 m.ProductId == request.ProductId &&
                 m.OrganizationId == request.OrganizationId &&
                 m.Quantity == request.Quantity &&
                 m.Price == request.Price &&
                 m.Date == request.Date &&
-                m.OrderId == request.OrderId)),
+                m.Type == request.Type)),
             Times.Once);
     }
 
     [Fact]
-    public async Task AddSupply_Fail_When_Validation_Fails_Test()
+    public async Task CreateOrder_Fail_When_Request_Is_Not_Valid_Test()
     {
         // Missing ProductId
-        var request1 = new AddSupply.AddSupplyRequest
+        var request1 = new CreateOrder.CreateOrderRequest
         {
-            OrganizationId = 456,
-            Quantity = 10,
-            Price = 49.99,
+            OrganizationId = 1,
+            Quantity = 5,
+            Price = 99.99,
             Date = DateTime.UtcNow,
-            OrderId = 789
+            Type = "supply"
         };
         var response1 = await Mediator.Send(request1);
         Assert.Equal(ResultStatus.Invalid, response1.Status);
-        Assert.Contains("Product Id must not be empty", response1.Message);
 
-        // Invalid Quantity
-        var request2 = new AddSupply.AddSupplyRequest
-        {
-            ProductId = 123,
-            OrganizationId = 456,
-            Quantity = 0,
-            Price = 49.99,
-            Date = DateTime.UtcNow,
-            OrderId = 789
-        };
-        var response2 = await Mediator.Send(request2);
-        Assert.Equal(ResultStatus.Invalid, response2.Status);
-        Assert.Contains("Quantity must be greater than 0", response2.Message);
-
-        // Negative Price
-        var request3 = new AddSupply.AddSupplyRequest
-        {
-            ProductId = 123,
-            OrganizationId = 456,
-            Quantity = 10,
-            Price = -1,
-            Date = DateTime.UtcNow,
-            OrderId = 789
-        };
-        var response3 = await Mediator.Send(request3);
-        Assert.Equal(ResultStatus.Invalid, response3.Status);
-        Assert.Contains("Price must be greater than or equal to 0", response3.Message);
-    }
-
-    [Fact]
-    public async Task AddSupply_Fail_When_Kafka_Producer_Fails_Test()
-    {
-        var request = new AddSupply.AddSupplyRequest
+        // Invalid Quantity (0)
+        var request2 = new CreateOrder.CreateOrderRequest
         {
             ProductId = 1,
             OrganizationId = 1,
-            Quantity = 1,
-            Price = 1.1,
+            Quantity = 0,
+            Price = 99.99,
             Date = DateTime.UtcNow,
-            OrderId = 1
+            Type = "supply"
+        };
+        var response2 = await Mediator.Send(request2);
+        Assert.Equal(ResultStatus.Invalid, response2.Status);
+
+        // Negative Price
+        var request3 = new CreateOrder.CreateOrderRequest
+        {
+            ProductId = 1,
+            OrganizationId = 1,
+            Quantity = 5,
+            Price = -1,
+            Date = DateTime.UtcNow,
+            Type = "supply"
+        };
+        var response3 = await Mediator.Send(request3);
+        Assert.Equal(ResultStatus.Invalid, response3.Status);
+
+        // Missing Type
+        var request4 = new CreateOrder.CreateOrderRequest
+        {
+            ProductId = 1,
+            OrganizationId = 1,
+            Quantity = 5,
+            Price = 99.99,
+            Date = DateTime.UtcNow
+        };
+        var response4 = await Mediator.Send(request4);
+        Assert.Equal(ResultStatus.Invalid, response4.Status);
+    }
+
+    [Fact]
+    public async Task CreateOrder_Fail_When_Kafka_Producer_Fails_Test()
+    {
+        var request = new CreateOrder.CreateOrderRequest
+        {
+            ProductId = 1,
+            OrganizationId = 1,
+            Quantity = 5,
+            Price = 99.99,
+            Date = DateTime.UtcNow,
+            Type = "supply"
         };
 
-        var expectedException = new Exception("Kafka connection failed");
+        var expectedException = new Exception("Kafka broker unavailable");
         _mockKafkaProducer.Setup(x =>
-            x.ProduceAsync(It.IsAny<string>(), It.IsAny<AddSupply.AddSupplyMessage>()))
+            x.ProduceAsync(It.IsAny<string>(), It.IsAny<CreateOrder.CreateOrderMessage>()))
             .ThrowsAsync(expectedException);
 
         var response = await Mediator.Send(request);

@@ -30,7 +30,13 @@ public class RegisterTests : BaseHandlerTest
     [Fact]
     public async Task Register_Success_When_Request_Is_Valid_Test()
     {
-        var request  = new Register.RegisterRequest { Email = "test@test.com", Password = "test_1456325", FullName = "test test" };
+        var request = new Register.RegisterRequest
+        {
+            Email = "test@test.com",
+            Password = "test1234",
+            FullName = "Test User",
+            PhoneNumber = "(555) 555-5555"
+        };
         var response = await Mediator.Send(request);
 
         Assert.Equal(ResultStatus.Success, response.Status);
@@ -47,6 +53,10 @@ public class RegisterTests : BaseHandlerTest
         {
             Email        = "test@mail.com",
             FullName     = "test test",
+            PhoneNumber = "(555) 555-5555",
+            Currency = "$",
+            ReceiveEmail = false,
+            ReceiveLowStockAlert = false,
             PasswordSalt = [1, 2, 3],
             PasswordHash = [1, 2, 3],
             UserType     = UserType.User,
@@ -55,7 +65,7 @@ public class RegisterTests : BaseHandlerTest
         await PostgresContext.Users.AddAsync(user);
         await PostgresContext.SaveChangesAsync();
 
-        var request  = new Register.RegisterRequest { Email = "test@mail.com", Password = "test_1456325", FullName = "test test" };
+        var request  = new Register.RegisterRequest { Email = "test@mail.com", Password = "test_1456325", FullName = "test test", PhoneNumber = "(555) 555-5555" };
         var response = await Mediator.Send(request);
 
         Assert.Equal(ResultStatus.Invalid,                  response.Status);

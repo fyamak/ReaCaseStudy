@@ -1,109 +1,120 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Autofac;
 using Business.RequestHandlers.Product;
-using Infrastructure.Data.Postgres.Entities;
+using Moq;
 using Shared.Models.Results;
+using Business.Services.Kafka.Interface;
 
 namespace Business.Test.RequestHandlers.Product;
 
 public class AddSalesTests : BaseHandlerTest
 {
+    private readonly Mock<IKafkaProducerService> _mockKafkaProducer;
+
     public AddSalesTests()
     {
+        _mockKafkaProducer = new Mock<IKafkaProducerService>();
+
+        ContainerBuilder.RegisterInstance(_mockKafkaProducer.Object).As<IKafkaProducerService>();
+
         BuildContainer();
     }
 
     [Fact]
-    public async Task AddSales_Success_When_Product_Sale_Is_Completed_Successfully_Test()
+    public async Task AddSales_Success_When_Request_Is_Valid_Test()
     {
-        var productToAdd = new Infrastructure.Data.Postgres.Entities.Product { Name = "Test Product" };
-        await PostgresContext.Products.AddAsync(productToAdd);
+        var request = new AddSales.AddSalesRequest
+        {
+            ProductId = 1,
+            OrganizationId = 1,
+            Quantity = 1,
+            Price = 1.1,
+            Date = DateTime.UtcNow,
+            OrderId = 1
+        };
 
-        var supplyToAdd = new Infrastructure.Data.Postgres.Entities.ProductSupply { ProductId = productToAdd.Id, Date = DateTime.UtcNow, Quantity = 100, RemainingQuantity = 100 };
-        await PostgresContext.ProductSupplies.AddAsync(supplyToAdd);
-        await PostgresContext.SaveChangesAsync();
+        _mockKafkaProducer.Setup(x =>
+            x.ProduceAsync(It.IsAny<string>(), It.IsAny<AddSales.AddSaleMessage>()))
+            .Returns(Task.CompletedTask);
 
-        var request = new AddSales.AddSalesRequest { Date = DateTime.UtcNow, Quantity = 100 };
-        request.GetType().GetProperty(nameof(request.ProductId))?.SetValue(request, productToAdd.Id);
         var response = await Mediator.Send(request);
-
-        await PostgresContext.Entry(supplyToAdd).ReloadAsync();
 
         Assert.Equal(ResultStatus.Success, response.Status);
-        Assert.NotNull(response.Data);
-        Assert.Equal(supplyToAdd.Quantity - 100, supplyToAdd.RemainingQuantity);
+        Assert.Equal("Adding sale to product request accepted", response.Data);
+
+        _mockKafkaProducer.Verify(x =>
+            x.ProduceAsync("product-add-sale", It.Is<AddSales.AddSaleMessage>(m =>
+                m.ProductId == request.ProductId &&
+                m.OrganizationId == request.OrganizationId &&
+                m.Quantity == request.Quantity &&
+                m.Price == request.Price &&
+                m.Date == request.Date &&
+                m.OrderId == request.OrderId)),
+            Times.Once);
     }
 
     [Fact]
-    public async Task AddSales_Fail_When_Specified_Product_Not_Found_Test()
+    public async Task AddSales_Fail_When_Request_Is_Not_Valid_Test()
     {
-        var request = new AddSales.AddSalesRequest { Date = DateTime.UtcNow, Quantity = 100 };
-        request.GetType().GetProperty(nameof(request.ProductId))?.SetValue(request, 1);
-        var response = await Mediator.Send(request);
+        // Missing ProductId
+        var request1 = new AddSales.AddSalesRequest
+        {
+            OrganizationId = 1,
+            Quantity = 1,
+            Price = 1.1,
+            Date = DateTime.UtcNow,
+            OrderId = 1
+        };
+        var response1 = await Mediator.Send(request1);
+        Assert.Equal(ResultStatus.Invalid, response1.Status);
 
-        Assert.Equal(ResultStatus.Invalid, response.Status);
-        Assert.Equal(response.Message, "Specified product is not found.");
-        Assert.Null(response.Data);
-    }
+        // Invalid Quantity
+        var request2 = new AddSales.AddSalesRequest
+        {
+            ProductId = 1,
+            OrganizationId = 1,
+            Quantity = 0,
+            Price = 1.1,
+            Date = DateTime.UtcNow,
+            OrderId = 1
+        };
+        var response2 = await Mediator.Send(request2);
+        Assert.Equal(ResultStatus.Invalid, response2.Status);
 
-
-    [Fact]
-    public async Task AddSales_Fail_When_Insufficient_Stock_Test()
-    {
-        var productToAdd = new Infrastructure.Data.Postgres.Entities.Product { Name = "Test Product" };
-        await PostgresContext.Products.AddAsync(productToAdd);
-
-        var supplyToAdd = new Infrastructure.Data.Postgres.Entities.ProductSupply { ProductId = productToAdd.Id, Date = DateTime.UtcNow, Quantity = 100, RemainingQuantity = 100 };
-        await PostgresContext.ProductSupplies.AddAsync(supplyToAdd);
-        await PostgresContext.SaveChangesAsync();
-
-        var request = new AddSales.AddSalesRequest { Date = DateTime.UtcNow, Quantity = 150 };
-        request.GetType().GetProperty(nameof(request.ProductId))?.SetValue(request, productToAdd.Id);
-        var response = await Mediator.Send(request);
-
-        Assert.Equal(ResultStatus.Invalid, response.Status);
-        Assert.Equal(response.Message, "Insufficient stock to complete the sale.");
-        Assert.Null(response.Data);
-    }
-
-    [Fact]
-    public async Task AddSales_Fail_When_Sale_Date_Is_Before_Supply_Date_Test()
-    {
-        var productToAdd = new Infrastructure.Data.Postgres.Entities.Product { Name = "Test Product" };
-        await PostgresContext.Products.AddAsync(productToAdd);
-
-        var supplyToAdd = new Infrastructure.Data.Postgres.Entities.ProductSupply { ProductId = productToAdd.Id, Date = DateTime.UtcNow.AddDays(1), Quantity = 100, RemainingQuantity = 100 };
-        await PostgresContext.ProductSupplies.AddAsync(supplyToAdd);
-        await PostgresContext.SaveChangesAsync();
-
-        var request = new AddSales.AddSalesRequest { Date = DateTime.UtcNow, Quantity = 150 };
-        request.GetType().GetProperty(nameof(request.ProductId))?.SetValue(request, productToAdd.Id);
-        var response = await Mediator.Send(request);
-
-        Assert.Equal(ResultStatus.Invalid, response.Status);
-        Assert.Equal(response.Message, "Insufficient stock to complete the sale.");
-        Assert.Null(response.Data);
+        // Invalid Price
+        var request3 = new AddSales.AddSalesRequest
+        {
+            ProductId = 1,
+            OrganizationId = 1,
+            Quantity = 1,
+            Price = -1,
+            Date = DateTime.UtcNow,
+            OrderId = 1
+        };
+        var response3 = await Mediator.Send(request3);
+        Assert.Equal(ResultStatus.Invalid, response3.Status);
     }
 
     [Fact]
-    public async Task AddSales_Validation_Fails_When_Quantity_Is_Less_Than_One_Test()
+    public async Task AddSales_Fail_When_Kafka_Producer_Fails_Test()
     {
-        var productToAdd = new Infrastructure.Data.Postgres.Entities.Product { Name = "Test Product" };
-        await PostgresContext.Products.AddAsync(productToAdd);
+        var request = new AddSales.AddSalesRequest
+        {
+            ProductId = 1,
+            OrganizationId = 1,
+            Quantity = 1,
+            Price = 1.1,
+            Date = DateTime.UtcNow,
+            OrderId = 1
+        };
 
-        var supplyToAdd = new Infrastructure.Data.Postgres.Entities.ProductSupply { ProductId = productToAdd.Id, Date = DateTime.UtcNow, Quantity = 100, RemainingQuantity = 100 };
-        await PostgresContext.ProductSupplies.AddAsync(supplyToAdd);
-        await PostgresContext.SaveChangesAsync();
+        var expectedException = new Exception("Kafka broker unavailable");
+        _mockKafkaProducer.Setup(x =>
+            x.ProduceAsync(It.IsAny<string>(), It.IsAny<AddSales.AddSaleMessage>()))
+            .ThrowsAsync(expectedException);
 
-        var request = new AddSales.AddSalesRequest { Date = DateTime.UtcNow, Quantity = 0 };
-        request.GetType().GetProperty(nameof(request.ProductId))?.SetValue(request, 1);
         var response = await Mediator.Send(request);
 
-        Assert.Equal(ResultStatus.Invalid, response.Status);
-        Assert.Equal(response.Message, "Quantity must be greater than 0.");
-        Assert.Null(response.Data);
+        Assert.Equal(ResultStatus.Error, response.Status);
+        Assert.Equal(expectedException.Message, response.Message);
     }
 }

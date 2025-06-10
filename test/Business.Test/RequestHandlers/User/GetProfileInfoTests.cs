@@ -27,6 +27,10 @@ public class GetProfileInfoTests : BaseHandlerTest
         {
             Email        = "test@email.com",
             FullName     = "test",
+            PhoneNumber = "(555) 555-5555",
+            Currency = "$",
+            ReceiveEmail = false,
+            ReceiveLowStockAlert = false,
             PasswordHash = [1, 2, 3],
             PasswordSalt = [1, 2, 3],
             UserType     = UserType.User
@@ -54,6 +58,10 @@ public class GetProfileInfoTests : BaseHandlerTest
         {
             Email        = "testDeleted@email.com",
             FullName     = "test",
+            PhoneNumber = "(555) 555-5555",
+            Currency = "$",
+            ReceiveEmail = false,
+            ReceiveLowStockAlert = false,
             PasswordHash = [1, 2, 3],
             PasswordSalt = [1, 2, 3],
             UserType     = UserType.User,

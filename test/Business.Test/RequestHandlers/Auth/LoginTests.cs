@@ -46,7 +46,14 @@ public class LoginTests : BaseHandlerTest
         userPasswordHashingService.CreatePasswordHash("test", out var passwordHash, out var passwordSalt);
         var userToLogin = new Infrastructure.Data.Postgres.Entities.User
         {
-            FullName = "test", Email = "test@test.com", PasswordHash = passwordHash, PasswordSalt = passwordSalt
+            FullName = "test",
+            Email = "test@test.com",
+            PhoneNumber = "(555) 555-5555",
+            Currency = "$",
+            ReceiveEmail = false,
+            ReceiveLowStockAlert = false,
+            PasswordHash = passwordHash,
+            PasswordSalt = passwordSalt
         };
         await PostgresContext.Users.AddAsync(userToLogin);
         await PostgresContext.SaveChangesAsync();
@@ -71,6 +78,10 @@ public class LoginTests : BaseHandlerTest
         {
             FullName     = "test",
             Email        = "test@test.com",
+            PhoneNumber = "(555) 555-5555",
+            Currency = "$",
+            ReceiveEmail = false,
+            ReceiveLowStockAlert = false,
             PasswordHash = passwordHash,
             PasswordSalt = passwordSalt,
             IsDeleted    = true

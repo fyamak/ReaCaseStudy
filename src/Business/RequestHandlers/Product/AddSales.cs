@@ -1,4 +1,6 @@
-﻿using Business.Services.Kafka.Interface;
+﻿using Business.Mediator.Behaviours.Requests;
+using Business.Services.Kafka.Interface;
+using FluentValidation;
 using MediatR;
 using Serilog;
 using Serilog.Events;
@@ -10,7 +12,7 @@ namespace Business.RequestHandlers.Product
 {
     public class AddSales
     {
-        public class AddSalesRequest : IRequest<DataResult<string>>
+        public class AddSalesRequest : IRequest<DataResult<string>>, IRequestToValidate
         {
             public int ProductId;
             public int OrganizationId { get; set; }
@@ -27,6 +29,30 @@ namespace Business.RequestHandlers.Product
             public double Price { get; set; }
             public DateTime Date { get; set; }
             public int OrderId { get; set; }
+        }
+
+        public class AddSalesRequestValidator : AbstractValidator<AddSalesRequest>
+        {
+            public AddSalesRequestValidator()
+            {
+                RuleFor(x => x.ProductId)
+                    .NotEmpty().WithMessage("Product Id must not be empty.");
+
+                RuleFor(x => x.OrganizationId)
+                    .NotEmpty().WithMessage("Organization Id must not be empty.");
+
+                RuleFor(x => x.Quantity)
+                    .GreaterThan(0).WithMessage("Quantity must be greater than 0.");
+
+                RuleFor(x => x.Price)
+                    .GreaterThanOrEqualTo(0).WithMessage("Price must be greater than or equal to 0.");
+
+                RuleFor(x => x.Date)
+                    .NotEmpty().WithMessage("Date must not be empty.");
+
+                RuleFor(x => x.OrderId)
+                    .NotEmpty().WithMessage("Order Id must not be empty.");
+            }
         }
 
 

@@ -60,9 +60,9 @@ public abstract class ResetPassword
 
                 _unitOfWork.UserTokens.RemoveRange(userTokensToRemove);
 
-                //token.AddEvent(new ResetPasswordTokenCreated.ResetPasswordTokenCreatedEvent { Token = token.Token, UserEmail = user.Email, UserId = user.Id });
+                token.AddEvent(new ResetPasswordTokenCreated.ResetPasswordTokenCreatedEvent { Token = token.Token, UserEmail = user.Email, UserId = user.Id });
 
-                Console.WriteLine($"UserId: {token.UserId}, Token: {token.Token}, Type: {token.TokenType}, Expires: {token.Expiration}, tokenToString: {token.ToString()}");
+                //Console.WriteLine($"UserId: {token.UserId}, Token: {token.Token}, Type: {token.TokenType}, Expires: {token.Expiration}, tokenToString: {token.ToString()}");
 
 
                 await _unitOfWork.UserTokens.AddAsync(token);

@@ -1,20 +1,19 @@
-﻿using Infrastructure.Data.Postgres;
-using MediatR;
+﻿using MediatR;
 using Shared.Models.Results;
 using Serilog;
 using Serilog.Events;
 using Shared.Extensions;
-using Infrastructure.Data.Postgres.Entities;
 using FluentValidation;
 using Shared.Models.Kafka;
 using Business.Services.Kafka.Interface;
+using Business.Mediator.Behaviours.Requests;
 
 
 namespace Business.RequestHandlers.Product
 {
     public class AddSupply
     {
-        public class AddSupplyRequest : IRequest<DataResult<string>>
+        public class AddSupplyRequest : IRequest<DataResult<string>>, IRequestToValidate
         {
             public int ProductId;
             public int OrganizationId { get; set; }
@@ -34,6 +33,29 @@ namespace Business.RequestHandlers.Product
             public int OrderId { get; set; }
         }
 
+        public class AddSalesRequestValidator : AbstractValidator<AddSupplyRequest>
+        {
+            public AddSalesRequestValidator()
+            {
+                RuleFor(x => x.ProductId)
+                    .NotEmpty().WithMessage("Product Id must not be empty.");
+
+                RuleFor(x => x.OrganizationId)
+                    .NotEmpty().WithMessage("Organization Id must not be empty.");
+
+                RuleFor(x => x.Quantity)
+                    .GreaterThan(0).WithMessage("Quantity must be greater than 0.");
+
+                RuleFor(x => x.Price)
+                    .GreaterThanOrEqualTo(0).WithMessage("Price must be greater than or equal to 0.");
+
+                RuleFor(x => x.Date)
+                    .NotEmpty().WithMessage("Date must not be empty.");
+
+                RuleFor(x => x.OrderId)
+                    .NotEmpty().WithMessage("Order Id must not be empty.");
+            }
+        }
         public class AddSupplyRequestHandler : IRequestHandler<AddSupplyRequest, DataResult<string>>
         {
             private readonly ILogger _logger;

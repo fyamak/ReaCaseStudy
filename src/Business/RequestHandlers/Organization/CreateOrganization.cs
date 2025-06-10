@@ -1,4 +1,6 @@
-﻿using Business.Services.Kafka.Interface;
+﻿using Business.Mediator.Behaviours.Requests;
+using Business.Services.Kafka.Interface;
+using FluentValidation;
 using MediatR;
 using Serilog;
 using Serilog.Events;
@@ -10,7 +12,7 @@ namespace Business.RequestHandlers.Organization;
 
 public abstract class CreateOrganization
 {
-    public class CreateOrganizationRequest : IRequest<DataResult<string>>
+    public class CreateOrganizationRequest : IRequest<DataResult<string>>, IRequestToValidate
     {
         public string Name { get; set; }
         public string Email { get; set; }
@@ -24,6 +26,17 @@ public abstract class CreateOrganization
         public string Email { get; set; }
         public string Phone { get; set; }
         public string Address { get; set; }
+    }
+
+    public class CreateOrganizationRequestValidator : AbstractValidator<CreateOrganizationRequest>
+    {
+        public CreateOrganizationRequestValidator()
+        {
+            RuleFor(x => x.Name).NotEmpty().WithMessage("Name must not be empty.");
+            RuleFor(x => x.Email).NotEmpty().EmailAddress().WithMessage("Please enter a valid email address.");
+            RuleFor(x => x.Phone).NotEmpty().WithMessage("Phone must not be empty.");
+            RuleFor(x => x.Address).NotEmpty().WithMessage("Address must not be empty.");
+        }
     }
 
     public class CreateOrganizationRequestHandler : IRequestHandler<CreateOrganizationRequest, DataResult<string>>

@@ -1,4 +1,6 @@
-﻿using Infrastructure.Data.Postgres;
+﻿using Business.Mediator.Behaviours.Requests;
+using FluentValidation;
+using Infrastructure.Data.Postgres;
 using MediatR;
 using Serilog;
 using Serilog.Events;
@@ -9,7 +11,7 @@ namespace Business.RequestHandlers.Category;
 
 public abstract class GetPagedCategories
 {
-    public class GetPagedCategoriesRequest : IRequest<PagedResult<GetPagedCategoriesResponse>>
+    public class GetPagedCategoriesRequest : IRequest<PagedResult<GetPagedCategoriesResponse>>, IRequestToValidate
     {
         public int PageNumber { get; set; }
         public int PageSize { get; set; }
@@ -20,6 +22,15 @@ public abstract class GetPagedCategories
     {
         public int Id { get; set; }
         public string Name { get; set; }
+    }
+
+    public class GetPagedCategoriesRequestValidator : AbstractValidator<GetPagedCategoriesRequest>
+    {
+        public GetPagedCategoriesRequestValidator()
+        {
+            RuleFor(x => x.PageNumber).GreaterThan(0).WithMessage("Page number must be bigger than 0");
+            RuleFor(x => x.PageSize).GreaterThan(0).WithMessage("Page number must be bigger than 0");
+        }
     }
 
     public class GetPagedCategoriesRequestHandler : IRequestHandler<GetPagedCategoriesRequest, PagedResult<GetPagedCategoriesResponse>>
