@@ -19,6 +19,10 @@ public class RefreshTokenTests : BaseHandlerTest
         {
             Email        = "test@mail.com",
             FullName     = "Test",
+            PhoneNumber = "(555) 555-5555",
+            Currency = "$",
+            ReceiveEmail = false,
+            ReceiveLowStockAlert = false,
             PasswordHash = [1, 2, 3],
             PasswordSalt = [1, 2, 3],
             IsDeleted    = false
@@ -60,6 +64,10 @@ public class RefreshTokenTests : BaseHandlerTest
         {
             Email        = "test@mail.com",
             FullName     = "Test",
+            PhoneNumber = "(555) 555-5555",
+            Currency = "$",
+            ReceiveEmail = false,
+            ReceiveLowStockAlert = false,
             PasswordHash = [1, 2, 3],
             PasswordSalt = [1, 2, 3],
             IsDeleted    = true

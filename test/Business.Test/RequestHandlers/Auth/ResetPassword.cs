@@ -27,6 +27,10 @@ public class ResetPassword : BaseHandlerTest
         {
             Email        = "test@email.com",
             FullName     = "Test",
+            PhoneNumber = "(555) 555-5555",
+            Currency = "$",
+            ReceiveEmail = false,
+            ReceiveLowStockAlert = false,
             PasswordHash = [1, 2, 3],
             PasswordSalt = [1, 2, 3],
             IsDeleted    = false
@@ -71,6 +75,10 @@ public class ResetPassword : BaseHandlerTest
         {
             Email        = "test1@email.com",
             FullName     = "Test",
+            PhoneNumber = "(555) 555-5555",
+            Currency = "$",
+            ReceiveEmail = false,
+            ReceiveLowStockAlert = false,
             PasswordHash = [1, 2, 3],
             PasswordSalt = [1, 2, 3],
             IsDeleted    = false
