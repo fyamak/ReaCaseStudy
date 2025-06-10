@@ -1,5 +1,7 @@
 ﻿
 
+using Business.Mediator.Behaviours.Requests;
+using FluentValidation;
 using Infrastructure.Data.Postgres;
 using Infrastructure.Data.Postgres.Entities;
 using MediatR;
@@ -12,7 +14,7 @@ namespace Business.RequestHandlers.Category;
 
 public abstract class CreateCategory
 {
-    public class CreateCategoryRequest : IRequest<DataResult<CreateCategoryResponse>>
+    public class CreateCategoryRequest : IRequest<DataResult<CreateCategoryResponse>>, IRequestToValidate
     {
         public string Name { get; set; }
     }
@@ -21,6 +23,14 @@ public abstract class CreateCategory
     {
         public int Id { get; set; }
         public string Name { get; set; }
+    }
+
+    public class CreateCategoryRequestValidator : AbstractValidator<CreateCategoryRequest>
+    {
+        public CreateCategoryRequestValidator()
+        {
+            RuleFor(x => x.Name).NotEmpty().WithMessage("Category name must not be empty.");
+        }
     }
 
     public class CreateCategoryRequestHandler : IRequestHandler<CreateCategoryRequest, DataResult<CreateCategoryResponse>>

@@ -6,12 +6,14 @@ using Shared.Extensions;
 using Infrastructure.Data.Postgres;
 using Shared.Models.Kafka;
 using Business.Services.Kafka.Interface;
+using FluentValidation;
+using Business.Mediator.Behaviours.Requests;
 
 namespace Business.RequestHandlers.Product
 {
     public abstract class CreateProduct
     {
-        public class CreateProductRequest : IRequest<DataResult<string>>
+        public class CreateProductRequest : IRequest<DataResult<string>>, IRequestToValidate
         {
             public string SKU { get; set; }
             public string Name { get; set; }
@@ -24,6 +26,17 @@ namespace Business.RequestHandlers.Product
             public string Name { get; set; }
             public int CategoryId { get; set; }
         }
+
+        public class CreateProductRequestValidator : AbstractValidator<CreateProductRequest>
+        {
+            public CreateProductRequestValidator()
+            {
+                RuleFor(x => x.SKU).NotEmpty().WithMessage("Please enter a SKU.");
+                RuleFor(x => x.Name).NotEmpty().WithMessage("Please enter a SKU.");
+                RuleFor(x => x.CategoryId).GreaterThan(0).WithMessage("CategoryId must be greater than zero.");
+            }
+        }
+
 
         public class CreateProductRequestHandler : IRequestHandler<CreateProductRequest, DataResult<string>>
         {
